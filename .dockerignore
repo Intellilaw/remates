@@ -1,0 +1,8 @@
+node_modules
+.git
+.env
+.env.*
+*.log
+.terraform
+infra/terraform/terraform.tfvars
+apps/api/src/data/runtime-db.json

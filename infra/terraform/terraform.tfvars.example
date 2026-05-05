@@ -1,0 +1,16 @@
+aws_region = "us-east-1"
+project_name = "intellilaw-remates"
+environment = "prod"
+domain_name = "remates.legalflow.solutions"
+
+# Keep the first apply at 0 until the ECR image has been pushed.
+service_desired_count = 0
+enable_https = false
+
+db_username = "remates_app"
+db_password = "replace-with-a-strong-password"
+jwt_secret = "replace-with-a-long-random-secret"
+
+mercado_pago_mode = "mock"
+mercado_pago_access_token = ""
+mercado_pago_webhook_secret = ""

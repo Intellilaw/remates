@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+apps/api/src/data/runtime-db.json
+
+*.log
+
+.terraform/
+*.tfstate
+*.tfstate.*
+infra/terraform/terraform.tfvars

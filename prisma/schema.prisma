@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id
+  email          String    @unique
+  fullName       String    @map("full_name")
+  phone          String?
+  gender         String    @default("UNSPECIFIED")
+  status         String    @default("ACTIVE")
+  passwordSalt   String    @map("password_salt")
+  passwordHash   String    @map("password_hash")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  identities     AuthIdentity[]
+  roles          UserRole[]
+  assignedCases  Case[]    @relation("AssignedStaff")
+  cases          Case[]    @relation("ClientCases")
+  sentMessages   Message[]
+  internalNotes  InternalNote[]
+  caseEvents     CaseEvent[]
+  auditLogs      AuditLog[]
+  conversions    ConversionEvent[]
+  conversations  ConversationParticipant[]
+
+  @@map("users")
+}
+
+model AuthIdentity {
+  id              String    @id
+  userId          String    @map("user_id")
+  provider        String
+  providerSubject String    @map("provider_subject")
+  lastLoginAt     DateTime? @map("last_login_at") @db.Timestamptz(6)
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubject])
+  @@map("auth_identities")
+}
+
+model Role {
+  code      String     @id
+  users     UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId   String @map("user_id")
+  roleCode String @map("role_code")
+
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     Role   @relation(fields: [roleCode], references: [code], onDelete: Cascade)
+
+  @@id([userId, roleCode])
+  @@map("user_roles")
+}
+
+model Property {
+  id                String   @id
+  slug              String   @unique
+  title             String
+  state             String
+  city              String
+  zoneLabel         String   @map("zone_label")
+  estimatedValueMxn Decimal  @map("estimated_value_mxn") @db.Decimal(14, 2)
+  legalBidMxn       Decimal  @map("legal_bid_mxn") @db.Decimal(14, 2)
+  discountPct       Decimal  @map("discount_pct") @db.Decimal(5, 2)
+  auctionRound      String   @default("PRIMERA") @map("auction_round")
+  shortDescription  String   @map("short_description")
+  publicStatus      String   @default("DRAFT") @map("public_status")
+  featured          Boolean  @default(false)
+  tags              String[] @default([])
+  heroTone          String   @default("navy") @map("hero_tone")
+  imageAccent       String   @default("#1d4ed8") @map("image_accent")
+  publishedAt       DateTime? @map("published_at") @db.Timestamptz(6)
+
+  privateDetails    PropertyPrivateDetail?
+  media             PropertyMedia[]
+  cases             Case[]
+  conversions       ConversionEvent[]
+
+  @@map("properties")
+}
+
+model PropertyPrivateDetail {
+  propertyId      String    @id @map("property_id")
+  fullAddress     String    @map("full_address")
+  courtName       String?   @map("court_name")
+  fileNumber      String?   @map("file_number")
+  auctionDate     DateTime? @map("auction_date") @db.Date
+  auctionTime     String?   @map("auction_time")
+  occupancyStatus String?   @map("occupancy_status")
+  legalSummary    String?   @map("legal_summary")
+  riskNotes       String?   @map("risk_notes")
+  internalNotes   String?   @map("internal_notes")
+
+  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_private_details")
+}
+
+model PropertyMedia {
+  id         String   @id
+  propertyId String   @map("property_id")
+  assetType  String   @map("asset_type")
+  s3Key      String   @map("s3_key")
+  isPublic   Boolean  @default(true) @map("is_public")
+  sortOrder  Int      @default(0) @map("sort_order")
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_media")
+}
+
+model ServiceStage {
+  code        String    @id
+  name        String
+  sortOrder   Int       @map("sort_order")
+  priceMxn    Decimal   @map("price_mxn") @db.Decimal(14, 2)
+  description String    @default("")
+  isActive    Boolean   @default(true) @map("is_active")
+
+  payments    Payment[]
+
+  @@map("service_stages")
+}
+
+model Case {
+  id                  String   @id
+  userId              String   @map("user_id")
+  propertyId          String   @map("property_id")
+  status              String   @default("NEW")
+  currentStage        String   @default("LEAD") @map("current_stage")
+  assignedStaffUserId String?  @map("assigned_staff_user_id")
+  leadSource          String?  @map("lead_source")
+  utmSource           String?  @map("utm_source")
+  utmMedium           String?  @map("utm_medium")
+  utmCampaign         String?  @map("utm_campaign")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastActivityAt      DateTime @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+
+  user                User     @relation("ClientCases", fields: [userId], references: [id], onDelete: Cascade)
+  property            Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  assignedStaff       User?    @relation("AssignedStaff", fields: [assignedStaffUserId], references: [id])
+  events              CaseEvent[]
+  payments            Payment[]
+  conversations       Conversation[]
+  internalNotes       InternalNote[]
+  conversions         ConversionEvent[]
+
+  @@unique([userId, propertyId])
+  @@index([currentStage])
+  @@index([status])
+  @@index([assignedStaffUserId])
+  @@map("cases")
+}
+
+model CaseEvent {
+  id          String   @id
+  caseId      String   @map("case_id")
+  eventType   String   @map("event_type")
+  actorUserId String?  @map("actor_user_id")
+  metadata    Json     @default("{}") @map("metadata_json")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@map("case_events")
+}
+
+model Payment {
+  id                   String    @id
+  caseId               String    @map("case_id")
+  stageCode            String    @map("stage_code")
+  provider             String
+  amountMxn            Decimal   @map("amount_mxn") @db.Decimal(14, 2)
+  currency             String    @default("MXN")
+  status               String    @default("PENDING")
+  providerPreferenceId String?   @map("provider_preference_id")
+  providerPaymentId    String?   @unique @map("provider_payment_id")
+  checkoutUrl          String?   @map("checkout_url")
+  paidAt               DateTime? @map("paid_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  case                 Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  stage                ServiceStage @relation(fields: [stageCode], references: [code])
+
+  @@index([caseId])
+  @@map("payments")
+}
+
+model PaymentWebhookEvent {
+  id               String    @id
+  providerEventId  String    @unique @map("provider_event_id")
+  eventType        String    @map("event_type")
+  payload          Json      @map("payload_json")
+  processingStatus String    @default("RECEIVED") @map("processing_status")
+  processedAt      DateTime? @map("processed_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("payment_webhook_events")
+}
+
+model Conversation {
+  id            String   @id
+  caseId        String   @map("case_id")
+  status        String   @default("OPEN")
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz(6)
+
+  case          Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  participants  ConversationParticipant[]
+  messages      Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId  String @map("conversation_id")
+  userId          String @map("user_id")
+  participantType String @map("participant_type")
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String    @id
+  conversationId String    @map("conversation_id")
+  senderUserId   String    @map("sender_user_id")
+  body           String
+  attachments    Json      @default("[]") @map("attachments_json")
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderUserId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model InternalNote {
+  id           String   @id
+  caseId       String   @map("case_id")
+  authorUserId String   @map("author_user_id")
+  body         String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  case         Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  author       User     @relation(fields: [authorUserId], references: [id])
+
+  @@map("internal_notes")
+}
+
+model CmsContent {
+  id           String  @id
+  contentKey   String  @unique @map("content_key")
+  title        String
+  bodyMarkdown String  @map("body_markdown")
+  videoS3Key   String? @map("video_s3_key")
+  isPublished  Boolean @default(false) @map("is_published")
+
+  @@map("cms_content")
+}
+
+model VisitorSession {
+  id          String   @id
+  anonymousId String   @map("anonymous_id")
+  referrer    String?
+  utmSource   String?  @map("utm_source")
+  utmMedium   String?  @map("utm_medium")
+  utmCampaign String?  @map("utm_campaign")
+  startedAt   DateTime @default(now()) @map("started_at") @db.Timestamptz(6)
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+
+  conversions ConversionEvent[]
+
+  @@map("visitor_sessions")
+}
+
+model ConversionEvent {
+  id               String   @id
+  visitorSessionId String?  @map("visitor_session_id")
+  userId           String?  @map("user_id")
+  caseId           String?  @map("case_id")
+  propertyId       String?  @map("property_id")
+  eventType        String   @map("event_type")
+  metadata         Json     @default("{}") @map("metadata_json")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  visitorSession   VisitorSession? @relation(fields: [visitorSessionId], references: [id])
+  user             User?           @relation(fields: [userId], references: [id])
+  case             Case?           @relation(fields: [caseId], references: [id])
+  property         Property?       @relation(fields: [propertyId], references: [id])
+
+  @@index([eventType, createdAt])
+  @@map("conversion_events")
+}
+
+model AuditLog {
+  id          String   @id
+  actorUserId String?  @map("actor_user_id")
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  action      String
+  before      Json?    @map("before_json")
+  after       Json?    @map("after_json")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@map("audit_logs")
+}

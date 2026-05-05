@@ -1,0 +1,235 @@
+:root {
+  --blue-950: #0f172a;
+  --blue-900: #142b52;
+  --blue-800: #1d4ed8;
+  --blue-700: #2563eb;
+  --blue-500: #60a5fa;
+  --blue-100: #dbeafe;
+  --blue-50: #eff6ff;
+  --white: #ffffff;
+  --slate-700: #334155;
+  --slate-500: #64748b;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --line: rgba(37, 99, 235, 0.12);
+  --shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI Variable", "Aptos", "Helvetica Neue", sans-serif;
+  color: var(--blue-950);
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 58%, #eef5ff 100%);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.topbar__row {
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(0, 1.35fr);
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 18px 0;
+}
+
+.topbar__identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand__logo {
+  width: 128px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 4px 6px;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.brand__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand__name {
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.brand__tag {
+  color: var(--slate-500);
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.version-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 999px;
+  color: var(--blue-900);
+  background: rgba(239, 246, 255, 0.9);
+  box-shadow: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.user-greeting {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 10px 16px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 999px;
+  color: var(--blue-950);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  font-size: 0.94rem;
+  white-space: nowrap;
+}
+
+.user-greeting strong {
+  font-weight: 800;
+}
+
+.nav button,
+.nav a,
+.ghost,
+.primary,
+.secondary {
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 18px;
+  text-decoration: none;
+}
+
+.nav button,
+.nav a,
+.ghost {
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--blue-900);
+}
+
+.primary {
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue-900), var(--blue-700));
+  box-shadow: var(--shadow);
+}
+
+.secondary {
+  color: var(--blue-900);
+  background: linear-gradient(135deg, var(--blue-100), #f8fbff);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.badge,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+}
+
+.badge {
+  padding: 8px 12px;
+  color: var(--blue-800);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  font-size: 0.84rem;
+}
+
+.badge--version {
+  color: var(--blue-900);
+  background: rgba(239, 246, 255, 0.9);
+  border-color: rgba(37, 99, 235, 0.14);
+  font-weight: 700;
+}
+
+.chip {
+  padding: 7px 11px;
+  color: var(--blue-900);
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  font-size: 0.85rem;
+}

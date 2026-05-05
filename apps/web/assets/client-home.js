@@ -1,0 +1,271 @@
+function renderTopbar() {
+  const dashboardLink = state.me
+    ? `<a class="primary" href="${DASHBOARD_PATH}">Mi dashboard</a>`
+    : `<button class="primary" data-action="open-auth" data-mode="register">Crear cuenta</button>`;
+  const userGreeting = state.me
+    ? `<div class="user-greeting" aria-label="Usuario conectado"><span>${escapeHtml(welcomeLabel(state.me))}</span><strong>${escapeHtml(firstName(state.me))}</strong></div>`
+    : "";
+  const brandTag = isDashboardRoute ? "Una app de LegalFlow · Dashboard del cliente" : "Una app de LegalFlow";
+  const brand = `
+    <a class="brand" href="/" aria-label="Inicio">
+      <div class="brand__logo"><img src="/assets/legalflow-logo.png" alt="LegalFlow" /></div>
+      <div>
+        <div class="brand__name">Remates Inmobiliarios México</div>
+        <div class="brand__tag">${brandTag}</div>
+      </div>
+    </a>
+  `;
+
+  if (isDashboardRoute) {
+    return `
+      <header class="topbar">
+        <div class="shell topbar__row">
+          <div class="topbar__identity">
+            ${brand}
+            <div class="version-pill" aria-label="Versión actual">${APP_VERSION}</div>
+          </div>
+          <div class="topbar__actions">
+            ${userGreeting}
+            <nav class="nav" aria-label="Navegación del dashboard">
+              <a href="/">Inicio</a>
+              <button data-action="scroll" data-target="#dashboard-cases">Mis expedientes</button>
+              <button data-action="scroll" data-target="#dashboard-catalog">Inmuebles</button>
+              ${state.me ? `<button class="ghost" data-action="logout">Salir</button>` : `<button class="primary" data-action="open-auth" data-mode="login">Iniciar sesión</button>`}
+            </nav>
+          </div>
+        </div>
+      </header>
+    `;
+  }
+
+  return `
+    <header class="topbar">
+      <div class="shell topbar__row">
+        <div class="topbar__identity">
+          ${brand}
+          <div class="version-pill" aria-label="Versión actual">${APP_VERSION}</div>
+        </div>
+        <div class="topbar__actions">
+          ${userGreeting}
+          <nav class="nav" aria-label="Navegación principal">
+            <button data-action="scroll" data-target="#listings">Inmuebles en remate</button>
+            <button data-action="scroll" data-target="#about-remates">¿Qué son los remates?</button>
+            ${dashboardLink}
+            ${state.me ? `<button class="ghost" data-action="logout">Salir</button>` : ""}
+          </nav>
+        </div>
+      </div>
+    </header>
+  `;
+}
+
+function renderHomeHero() {
+  const featured = state.properties.filter((item) => item.featured).slice(0, 2);
+
+  return `
+    <section class="hero shell">
+      <div class="hero__grid">
+        <div class="hero__panel">
+          <h1>Remates en CDMX, explicados paso a paso.</h1>
+          <p>Sabemos que un remate judicial puede generar dudas. Por eso mostramos qué información es pública, qué se desbloquea con cada etapa y qué costos debes considerar antes de tomar una decisión.</p>
+          <div class="hero__actions">
+            <button class="primary" data-action="scroll" data-target="#listings">Ver remates en CDMX</button>
+            <button class="secondary" data-action="scroll" data-target="#about-remates">Qué es un remate</button>
+          </div>
+          <div class="hero__stats">
+            <div class="stat"><strong>Antes de pagar</strong><span>ves avalúo, postura legal, almoneda y fecha</span></div>
+            <div class="stat"><strong>Con asesoría</strong><span>desbloqueas órgano subastador, hora y revisión guiada</span></div>
+            <div class="stat"><strong>Sin sorpresas</strong><span>explicamos también adeudos y costos posteriores</span></div>
+          </div>
+        </div>
+        <aside class="hero__aside">
+          <div>
+            <h2 class="section-title">Inmuebles destacados</h2>
+            <p class="section-copy">Una muestra curada de remates para compradores que necesitan claridad legal, operativa y económica antes de comprometer capital.</p>
+          </div>
+          ${featured.map((property) => `
+            <div class="property-card">
+              <div class="property-cover tone-${property.heroTone}">
+                <span class="badge">${escapeHtml(property.city)}</span>
+                <div>
+                  <strong>${escapeHtml(property.title)}</strong>
+                    <div>Postura legal ${formatMoney(property.legalBidMxn)}</div>
+                </div>
+              </div>
+              <div class="property-card__body">
+                <div class="property-card__meta">
+                  <span class="chip">Avalúo ${formatMoney(property.estimatedValueMxn)}</span>
+                  <span class="chip">Postura ${formatMoney(property.legalBidMxn)}</span>
+                  <span class="chip">${escapeHtml(property.zoneLabel)}</span>
+                </div>
+                <p>${escapeHtml(property.shortDescription)}</p>
+                <button class="primary" data-action="open-property" data-slug="${property.slug}">Ver detalle</button>
+              </div>
+            </div>
+          `).join("")}
+        </aside>
+      </div>
+      <div class="metric-strip">
+        <div class="metric"><strong>${state.properties.length}</strong><span>inmuebles disponibles en CDMX</span></div>
+        <div class="metric"><strong>${formatMoney(3000)}</strong><span>asesoría inicial para desbloquear órgano y hora</span></div>
+        <div class="metric"><strong>${formatMoney(70000)}</strong><span>posesión solo después de adjudicación judicial</span></div>
+      </div>
+    </section>
+  `;
+}
+
+function renderExplainer() {
+  return `
+    <section class="section shell" id="about-remates">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Qué son los remates</div>
+          <h2 class="section-title">Una oportunidad patrimonial con reglas judiciales, no una compraventa común.</h2>
+          <p class="section-copy">Un remate inmobiliario es una subasta ordenada dentro de un procedimiento judicial. Puede permitir adquirir por debajo del valor comercial, pero exige entender la almoneda, la postura legal, la adjudicación, la entrega y los gastos posteriores.</p>
+        </div>
+      </div>
+      <div class="section-card explain-grid">
+        <div>
+          <p>La plataforma está pensada para avanzar sin presión: primero ves datos públicos, después eliges si quieres abrir un expediente y, solo si te conviene, contratas la asesoría inicial.</p>
+          <p>Desde tu cuenta puedes dar seguimiento a tus inmuebles de interés, pagos, fechas relevantes, mensajes y desbloqueos de información.</p>
+        </div>
+        <div class="explain-points">
+          <div class="explain-point">
+            <h3>1. Exploras</h3>
+            <p>Ves inmuebles en CDMX con avalúo, postura legal, almoneda y fecha de subasta. No necesitas pagar para entender el panorama inicial.</p>
+          </div>
+          <div class="explain-point">
+            <h3>2. Te asesoras</h3>
+            <p>Con ${formatMoney(3000)} se desbloquean el órgano subastador y la hora, y revisamos contigo qué significa participar en esa almoneda.</p>
+          </div>
+          <div class="explain-point">
+            <h3>3. Participas acompañado</h3>
+            <p>Con ${formatMoney(20000)} te acompañamos en la preparación, audiencia, billete de depósito y recuperación del billete si no hay adjudicación.</p>
+          </div>
+          <div class="explain-point">
+            <h3>4. Tomas posesión</h3>
+            <p>Si el inmueble te es adjudicado, puedes contratar la etapa de posesión por ${formatMoney(70000)} para que demos seguimiento a la entrega ordenada por el juez.</p>
+          </div>
+        </div>
+      </div>
+      <div class="clarity-grid">
+        <div class="clarity-card clarity-card--blue">
+          <div class="kicker">Adjudicación judicial</div>
+          <h3>El inmueble se transmite por resolución de un juez.</h3>
+          <p>Cuando el remate concluye con adjudicación, el juez reconoce al adjudicatario y ordena las actuaciones necesarias para formalizar la transmisión, cancelar gravámenes judicialmente procedentes y, cuando corresponde, entregar la posesión.</p>
+          <p>Esto da mayor certeza frente a cargas previas sobre el inmueble, porque la adquisición deriva de una orden judicial y no de una negociación privada.</p>
+        </div>
+        <div class="clarity-card">
+          <div class="kicker">Importante</div>
+          <h3>La adjudicación no borra todos los adeudos del inmueble.</h3>
+          <p>Aun después de adjudicado, pueden existir adeudos de agua, predial, energía eléctrica o cuotas de mantenimiento. Esos conceptos no necesariamente se extinguen por la adjudicación y el adjudicatario debe considerarlos como costos separados.</p>
+          <p>Por eso explicamos estos puntos desde el inicio y los revisamos antes de que el cliente decida avanzar.</p>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderEducation() {
+  return `
+    <section class="section shell" id="education">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Acompañamiento</div>
+          <h2 class="section-title">Qué obtienes en cada etapa</h2>
+          <p class="section-copy">Cada pago tiene un propósito concreto. Nuestro objetivo es que sepas qué estás contratando, qué información se libera y qué decisión viene después.</p>
+        </div>
+      </div>
+      <div class="section-card education-grid">
+        <div class="education-video">
+          <div>
+            <div class="play-badge">▶</div>
+            <h3>Guía del proceso</h3>
+            <p>Conoce los pasos clave para evaluar un remate, preparar la audiencia, entender la adjudicación y anticipar los costos posteriores.</p>
+          </div>
+        </div>
+        <div>
+          <div class="kicker">Información esencial</div>
+          <h3>${escapeHtml(state.education?.title || "Qué es un remate inmobiliario")}</h3>
+          <p>${escapeHtml(state.education?.bodyMarkdown || "")}</p>
+          <div class="explain-points">
+            ${STAGES.map((stage) => `
+              <div class="explain-point">
+                <h3>${escapeHtml(stage.title)}</h3>
+                <p>${escapeHtml(stage.summary)}</p>
+                <ul class="clean-list">
+                  ${(stage.details || []).map((detail) => `<li>${escapeHtml(detail)}</li>`).join("")}
+                </ul>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderListings(sectionId = "listings", title = "Remates en CDMX", copy = "Consulta el avalúo, la postura legal, la almoneda y la fecha de subasta de cada inmueble. El órgano subastador, la hora y la dirección completa se liberan con la asesoría inicial, para que tengas los datos operativos antes de avanzar.") {
+  const items = filteredProperties();
+  const boroughs = [...new Set(state.properties.map((item) => item.city))].sort((left, right) => left.localeCompare(right, "es-MX"));
+
+  return `
+    <section class="section shell" id="${sectionId}">
+      <div class="section-head">
+        <div>
+          <div class="kicker">Catálogo</div>
+          <h2 class="section-title">${title}</h2>
+          <p class="section-copy">${copy}</p>
+        </div>
+        <div class="filters">
+          <select data-filter="borough">
+            <option value="all">Todas las alcaldías</option>
+            ${boroughs.map((item) => `<option value="${escapeHtml(item)}" ${state.filters.borough === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="properties-grid">
+        ${items.map((property) => {
+          const auctionDate = property.auctionDate ? formatDate(property.auctionDate) : "Fecha por confirmar";
+          return `
+            <article class="property-card">
+              <div class="property-cover tone-${property.heroTone}">
+                <span class="badge">${escapeHtml(property.city)}</span>
+                <div>
+                  <div class="kicker">${escapeHtml(property.zoneLabel)}</div>
+                  <strong>${escapeHtml(property.title)}</strong>
+                </div>
+              </div>
+                <div class="property-card__body">
+                  <div class="property-facts">
+                    <div><span>Avalúo</span><strong>${formatMoney(property.estimatedValueMxn)}</strong></div>
+                    <div><span>Postura legal</span><strong>${formatMoney(property.legalBidMxn)}</strong></div>
+                    <div><span>Almoneda</span><strong>${escapeHtml(auctionRoundLabel(property.auctionRound))}</strong></div>
+                    <div><span>Fecha de subasta</span><strong>${escapeHtml(auctionDate)}</strong></div>
+                  </div>
+                  <p>${escapeHtml(property.shortDescription)}</p>
+                  <button class="primary" data-action="open-property" data-slug="${property.slug}">Ver detalle</button>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderDashboardAccess() {
+  return `
+    <section class="section shell dashboard-shell">
+      <div class="section-card access-card">
+        <div class="kicker">Acceso privado</div>
+        <h1 class="section-title">Este dashboard es tu espacio de seguimiento.</h1>
+        <p class="section-copy">Aquí verás tus expedientes, fechas de almoneda, pagos por etapa, mensajes y, cuando corresponda, órgano subastador, hora, dirección completa y revisión legal del inmueble.</p>
+        <div class="inline-actions">
+          <button class="primary" data-action="open-auth" data-mode="login">Iniciar sesión</button>
+          <a class="secondary" href="/">Volver al inicio</a>
+        </div>
+      </div>
+    </section>
+  `;
+}
