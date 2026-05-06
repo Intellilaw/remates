@@ -133,8 +133,8 @@ resource "aws_s3_bucket_policy" "frontend" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Sid       = "AllowCloudFrontServicePrincipalReadOnly"
-      Effect    = "Allow"
+      Sid    = "AllowCloudFrontServicePrincipalReadOnly"
+      Effect = "Allow"
       Principal = {
         Service = "cloudfront.amazonaws.com"
       }

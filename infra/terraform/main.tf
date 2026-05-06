@@ -253,24 +253,24 @@ resource "aws_db_subnet_group" "main" {
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier              = "${local.name}-postgres"
-  engine                  = "postgres"
-  engine_version          = "16.3"
-  instance_class          = "db.t4g.micro"
-  allocated_storage       = 20
-  max_allocated_storage   = 100
-  storage_encrypted       = true
-  username                = var.db_username
-  password                = var.db_password
-  db_name                 = "remates"
-  db_subnet_group_name    = aws_db_subnet_group.main.name
-  vpc_security_group_ids  = [aws_security_group.db.id]
-  publicly_accessible     = false
-  backup_retention_period = 7
-  deletion_protection     = true
-  skip_final_snapshot     = false
+  identifier                = "${local.name}-postgres"
+  engine                    = "postgres"
+  engine_version            = "16.3"
+  instance_class            = "db.t4g.micro"
+  allocated_storage         = 20
+  max_allocated_storage     = 100
+  storage_encrypted         = true
+  username                  = var.db_username
+  password                  = var.db_password
+  db_name                   = "remates"
+  db_subnet_group_name      = aws_db_subnet_group.main.name
+  vpc_security_group_ids    = [aws_security_group.db.id]
+  publicly_accessible       = false
+  backup_retention_period   = 7
+  deletion_protection       = true
+  skip_final_snapshot       = false
   final_snapshot_identifier = "${local.name}-postgres-final"
-  tags                    = local.tags
+  tags                      = local.tags
 }
 
 resource "aws_secretsmanager_secret" "app" {
@@ -281,9 +281,9 @@ resource "aws_secretsmanager_secret" "app" {
 resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
-    DATABASE_URL = "postgresql://${var.db_username}:${urlencode(var.db_password)}@${aws_db_instance.postgres.address}:5432/remates?schema=public"
-    JWT_SECRET = var.jwt_secret
-    MERCADO_PAGO_ACCESS_TOKEN = var.mercado_pago_access_token
+    DATABASE_URL                = "postgresql://${var.db_username}:${urlencode(var.db_password)}@${aws_db_instance.postgres.address}:5432/remates?schema=public"
+    JWT_SECRET                  = var.jwt_secret
+    MERCADO_PAGO_ACCESS_TOKEN   = var.mercado_pago_access_token
     MERCADO_PAGO_WEBHOOK_SECRET = var.mercado_pago_webhook_secret
   })
 }
