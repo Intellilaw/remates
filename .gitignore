@@ -10,4 +10,6 @@ apps/api/src/data/runtime-db.json
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+tfplan
 infra/terraform/terraform.tfvars
