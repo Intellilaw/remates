@@ -24,6 +24,15 @@ body {
 }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
+.link-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
 
 .layout {
   width: min(1380px, calc(100vw - 28px));

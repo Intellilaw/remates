@@ -1,4 +1,5 @@
 function renderLogin() {
+  const authPanel = renderPasswordResetPanel();
   return `
     <div class="login-wrap">
         <div class="login-card">
@@ -16,17 +17,54 @@ function renderLogin() {
             </div>
           </div>
           <div>
-            <form data-form="login">
-              <input name="email" type="email" placeholder="Correo" required />
-              <input name="accessKey" type="password" placeholder="Contraseña" autocomplete="off" autocapitalize="none" spellcheck="false" required />
-              <button class="primary" type="submit">Entrar</button>
-            </form>
+            ${authPanel}
             <p class="small"><a href="/">Volver al sitio público</a></p>
           </div>
         </div>
         <div class="version-pill" aria-label="Versión actual">${APP_VERSION}</div>
       </div>
     </div>
+  `;
+}
+
+function renderPasswordResetPanel() {
+  if (state.passwordResetMode === "request") {
+    return `
+      <form data-form="password-reset-request">
+        <input name="email" type="email" placeholder="Correo de la cuenta" required />
+        <button class="primary" type="submit">Enviar correo de recuperación</button>
+        <button class="ghost" data-action="password-reset-cancel" type="button">Volver a entrar</button>
+      </form>
+    `;
+  }
+
+  if (state.passwordResetMode === "sent") {
+    return `
+      <div class="stack">
+        <p class="small">Si el correo existe, enviaremos instrucciones para recuperar la contraseña.</p>
+        ${state.passwordResetUrl ? `<a class="primary text-center" href="${escapeHtml(state.passwordResetUrl)}">Abrir enlace de recuperación</a>` : ""}
+        <button class="ghost" data-action="password-reset-cancel" type="button">Volver a entrar</button>
+      </div>
+    `;
+  }
+
+  if (state.passwordResetMode === "confirm") {
+    return `
+      <form data-form="password-reset-confirm">
+        <input name="password" type="password" placeholder="Nueva contraseña" autocomplete="new-password" minlength="8" required />
+        <button class="primary" type="submit">Guardar nueva contraseña</button>
+        <button class="ghost" data-action="password-reset-cancel" type="button">Cancelar</button>
+      </form>
+    `;
+  }
+
+  return `
+    <form data-form="login">
+      <input name="email" type="email" placeholder="Correo" required />
+      <input name="accessKey" type="password" placeholder="Contraseña" autocomplete="off" autocapitalize="none" spellcheck="false" required />
+      <button class="primary" type="submit">Entrar</button>
+    </form>
+    <p class="small"><button class="link-button" data-action="password-reset-request" type="button">Olvidé mi contraseña</button></p>
   `;
 }
 

@@ -1,7 +1,10 @@
 function renderTopbar() {
-  const dashboardLink = state.me
+  const accountActions = state.me
     ? `<a class="primary" href="${DASHBOARD_PATH}">Mi dashboard</a>`
-    : `<button class="primary" data-action="open-auth" data-mode="register">Crear cuenta</button>`;
+    : `
+      <button class="secondary" data-action="open-auth" data-mode="login">Entrar</button>
+      <button class="primary" data-action="open-auth" data-mode="register">Crear cuenta</button>
+    `;
   const userGreeting = state.me
     ? `<div class="user-greeting" aria-label="Usuario conectado"><span>${escapeHtml(welcomeLabel(state.me))}</span><strong>${escapeHtml(firstName(state.me))}</strong></div>`
     : "";
@@ -50,7 +53,7 @@ function renderTopbar() {
           <nav class="nav" aria-label="Navegación principal">
             <button data-action="scroll" data-target="#listings">Inmuebles en remate</button>
             <button data-action="scroll" data-target="#about-remates">¿Qué son los remates?</button>
-            ${dashboardLink}
+            ${accountActions}
             ${state.me ? `<button class="ghost" data-action="logout">Salir</button>` : ""}
           </nav>
         </div>

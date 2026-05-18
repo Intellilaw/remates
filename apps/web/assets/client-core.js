@@ -69,7 +69,8 @@ const currencyFormatter = new Intl.NumberFormat("es-MX", {
 const dateFormatter = new Intl.DateTimeFormat("es-MX", {
   dateStyle: "medium"
 });
-const APP_VERSION = "Versión 1.2";
+const APP_VERSION = "Versión 1.3";
+const initialPasswordResetToken = new URLSearchParams(window.location.search).get("resetToken") || "";
 
 const state = {
   token: localStorage.getItem("remates_client_token") || "",
@@ -81,9 +82,11 @@ const state = {
   selectedCaseId: localStorage.getItem("remates_selected_case_id") || null,
   cases: [],
   messages: [],
-  authOpen: false,
-  authMode: "login",
+  authOpen: Boolean(initialPasswordResetToken),
+  authMode: initialPasswordResetToken ? "reset-confirm" : "login",
   authPasswordVisible: false,
+  passwordResetToken: initialPasswordResetToken,
+  passwordResetUrl: "",
   toast: "",
   filters: {
     borough: "all"
@@ -200,18 +203,21 @@ function openAuth(mode = state.authMode) {
   state.authOpen = true;
   state.authMode = mode;
   state.authPasswordVisible = false;
+  state.passwordResetUrl = "";
   render();
 }
 
 function closeAuth() {
   state.authOpen = false;
   state.authPasswordVisible = false;
+  state.passwordResetUrl = "";
   render();
 }
 
 function switchAuth(mode) {
   state.authMode = mode;
   state.authPasswordVisible = false;
+  state.passwordResetUrl = "";
   render();
 }
 

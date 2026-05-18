@@ -79,6 +79,7 @@ export async function readPrismaState(prisma) {
     caseEvents,
     payments,
     paymentWebhookEvents,
+    passwordResetTokens,
     conversations,
     conversationParticipants,
     messages,
@@ -97,6 +98,7 @@ export async function readPrismaState(prisma) {
     prisma.caseEvent.findMany(),
     prisma.payment.findMany(),
     prisma.paymentWebhookEvent.findMany(),
+    prisma.passwordResetToken.findMany(),
     prisma.conversation.findMany(),
     prisma.conversationParticipant.findMany(),
     prisma.message.findMany({ orderBy: { createdAt: "asc" } }),
@@ -167,6 +169,14 @@ export async function readPrismaState(prisma) {
       payload: item.payload,
       processingStatus: item.processingStatus,
       processedAt: toIso(item.processedAt),
+      createdAt: toIso(item.createdAt)
+    })),
+    passwordResetTokens: passwordResetTokens.map((item) => ({
+      id: item.id,
+      userId: item.userId,
+      email: item.email,
+      expiresAt: toIso(item.expiresAt),
+      usedAt: toIso(item.usedAt),
       createdAt: toIso(item.createdAt)
     })),
     conversations: conversations.map((item) => ({
@@ -244,6 +254,7 @@ export async function writePrismaState(prisma, data) {
     await tx.conversationParticipant.deleteMany();
     await tx.conversation.deleteMany();
     await tx.paymentWebhookEvent.deleteMany();
+    await tx.passwordResetToken.deleteMany();
     await tx.payment.deleteMany();
     await tx.caseEvent.deleteMany();
     await tx.case.deleteMany();
@@ -379,6 +390,14 @@ export async function writePrismaState(prisma, data) {
       payload: item.payload || {},
       processingStatus: item.processingStatus || "RECEIVED",
       processedAt: item.processedAt ? new Date(item.processedAt) : null,
+      createdAt: item.createdAt ? new Date(item.createdAt) : new Date()
+    })) });
+    await tx.passwordResetToken.createMany({ data: (data.passwordResetTokens || []).map((item) => ({
+      id: item.id,
+      userId: item.userId,
+      email: item.email,
+      expiresAt: new Date(item.expiresAt),
+      usedAt: item.usedAt ? new Date(item.usedAt) : null,
       createdAt: item.createdAt ? new Date(item.createdAt) : new Date()
     })) });
     await tx.conversation.createMany({ data: data.conversations.map((item) => ({

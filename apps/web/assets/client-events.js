@@ -177,6 +177,36 @@ document.addEventListener("submit", async (event) => {
       }
     }
 
+    if (formName === "password-reset-request") {
+      const payload = await api("/api/auth/password-reset/request", {
+        method: "POST",
+        body: JSON.stringify({
+          email: formData.get("email"),
+          app: "web"
+        })
+      });
+      state.passwordResetUrl = payload.resetUrl || "";
+      state.authMode = "reset-sent";
+      setToast("Revisa tu correo de recuperación.");
+      render();
+    }
+
+    if (formName === "password-reset-confirm") {
+      await api("/api/auth/password-reset/confirm", {
+        method: "POST",
+        body: JSON.stringify({
+          token: state.passwordResetToken,
+          password: formData.get("password")
+        })
+      });
+      state.authMode = "login";
+      state.passwordResetToken = "";
+      state.passwordResetUrl = "";
+      window.history.replaceState({}, "", window.location.pathname || "/");
+      setToast("Contraseña actualizada. Ya puedes iniciar sesión.");
+      render();
+    }
+
     if (formName === "message") {
       const body = String(formData.get("body") || "").trim();
       if (!body) {

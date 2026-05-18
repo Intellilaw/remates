@@ -3,7 +3,7 @@ import { config } from "../../config.js";
 import { authProviders, createAuthResponse, exposeUser, loginUser, registerUser, socialDemoLogin } from "../../services/auth-service.js";
 import { confirmMockPayment, createCheckout } from "../../services/payment-service.js";
 import { badRequest, forbidden, notFound, readJsonBody, sendJson, unauthorized } from "../../utils/http.js";
-import { normalizeEmail, randomId, sanitizeText } from "../../utils/security.js";
+import { hashPassword, normalizeEmail, randomId, sanitizeText } from "../../utils/security.js";
 import { actorCanAccessCase, caseSnapshot, getServiceStage, logAudit, propertyAccessForActor, propertySnapshot, requireAuth, stageProgress } from "../../domain/app-domain.js";
 
 export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
@@ -18,6 +18,76 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
 
   if (pathname === "/api/auth/providers" && req.method === "GET") {
     return sendJson(res, 200, authProviders());
+  }
+
+  if (pathname === "/api/auth/password-reset/request" && req.method === "POST") {
+    try {
+      const body = await readJsonBody(req);
+      const email = normalizeEmail(body.email);
+      const user = db.users.find((item) => item.email === email);
+      let resetUrl = null;
+
+      if (user) {
+        const token = randomId("reset");
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 30).toISOString();
+        await mutateDb(async (draft) => {
+          draft.passwordResetTokens = (draft.passwordResetTokens || []).filter(
+            (item) => item.userId !== user.id && new Date(item.expiresAt) > new Date()
+          );
+          draft.passwordResetTokens.push({
+            id: token,
+            userId: user.id,
+            email,
+            expiresAt,
+            usedAt: null,
+            createdAt: new Date().toISOString()
+          });
+          return draft;
+        });
+        const resetBaseUrl = body.app === "admin" ? config.publicAdminUrl : config.publicWebUrl;
+        resetUrl = `${resetBaseUrl}?resetToken=${encodeURIComponent(token)}`;
+      }
+
+      return sendJson(res, 200, {
+        ok: true,
+        message: "Si el correo existe, enviaremos instrucciones para recuperar la contraseña.",
+        resetUrl: config.appEnv === "development" ? resetUrl : null
+      });
+    } catch (error) {
+      return badRequest(res, error.message);
+    }
+  }
+
+  if (pathname === "/api/auth/password-reset/confirm" && req.method === "POST") {
+    try {
+      const body = await readJsonBody(req);
+      const token = String(body.token || "");
+      const password = String(body.password || "");
+      if (!token || password.length < 8) {
+        throw new Error("Token inválido o contraseña demasiado corta");
+      }
+
+      await mutateDb(async (draft) => {
+        const reset = (draft.passwordResetTokens || []).find((item) => item.id === token && !item.usedAt);
+        if (!reset || new Date(reset.expiresAt) < new Date()) {
+          throw new Error("El enlace de recuperación expiró o ya fue usado");
+        }
+        const user = draft.users.find((item) => item.id === reset.userId);
+        if (!user) {
+          throw new Error("Usuario no encontrado");
+        }
+        const { salt, hash } = hashPassword(password);
+        user.salt = salt;
+        user.passwordHash = hash;
+        user.updatedAt = new Date().toISOString();
+        reset.usedAt = new Date().toISOString();
+        return draft;
+      });
+
+      return sendJson(res, 200, { ok: true });
+    } catch (error) {
+      return badRequest(res, error.message);
+    }
   }
 
   if (pathname === "/api/auth/register" && req.method === "POST") {

@@ -80,43 +80,89 @@ function renderAuth() {
     return "";
   }
 
+  const isRegister = state.authMode === "register";
+  const isLogin = state.authMode === "login";
+  const isResetRequest = state.authMode === "reset-request";
+  const isResetSent = state.authMode === "reset-sent";
+  const isResetConfirm = state.authMode === "reset-confirm";
+  const title = isRegister ? "Crear cuenta" : isLogin ? "Entrar a tu dashboard" : "Recuperar contraseña";
+  const copy = isRegister
+    ? "Crea tu cuenta para guardar inmuebles, consultar fechas y avanzar con acompañamiento por etapas."
+    : isLogin
+      ? "Inicia sesión para consultar tus expedientes, pagos y mensajes."
+      : isResetSent
+        ? "Si el correo existe, generamos instrucciones para restablecer tu contraseña."
+        : isResetConfirm
+          ? "Escribe tu nueva contraseña para volver a entrar a tu dashboard."
+          : "Escribe el correo de tu cuenta y te enviaremos instrucciones para restablecer tu contraseña.";
+  const authForm = isResetSent ? `
+              <div class="notice-card">
+                <strong>Solicitud recibida.</strong>
+                <p>Revisa tu correo para continuar.</p>
+                ${state.passwordResetUrl ? `<a class="primary text-center" href="${escapeHtml(state.passwordResetUrl)}">Abrir enlace de recuperación</a>` : ""}
+              </div>
+            ` : isResetRequest ? `
+              <form class="form-grid" data-form="password-reset-request">
+                <input name="email" type="email" placeholder="Correo electrónico" autocomplete="username" required />
+                <button class="primary" type="submit">Enviar instrucciones</button>
+              </form>
+            ` : isResetConfirm ? `
+              <form class="form-grid" data-form="password-reset-confirm">
+                <div class="password-field">
+                  <input name="password" type="${state.authPasswordVisible ? "text" : "password"}" autocomplete="new-password" placeholder="Nueva contraseña" minlength="8" required />
+                  <button type="button" class="password-toggle" onclick="window.rematesCliente.toggleAuthPassword(this); return false;" aria-label="${state.authPasswordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}">${state.authPasswordVisible ? "🙈" : "👁"}</button>
+                </div>
+                <button class="primary" type="submit">Actualizar contraseña</button>
+              </form>
+            ` : `
+              <form class="form-grid" data-form="${state.authMode}">
+                ${isRegister ? `
+                  <input name="fullName" placeholder="Nombre completo" autocomplete="name" required />
+                  <select name="gender" required>
+                    <option value="">Cómo prefieres que te demos la bienvenida</option>
+                    <option value="FEMALE">Bienvenida</option>
+                    <option value="MALE">Bienvenido</option>
+                    <option value="UNSPECIFIED">Prefiero un saludo neutral</option>
+                  </select>
+                ` : ""}
+                <input name="email" type="email" placeholder="Correo electrónico" autocomplete="${isLogin ? "username" : "email"}" required />
+                ${isRegister ? `<input name="phone" placeholder="Teléfono" autocomplete="tel" />` : ""}
+                <div class="password-field">
+                  <input name="password" type="${state.authPasswordVisible ? "text" : "password"}" autocomplete="${isLogin ? "current-password" : "new-password"}" placeholder="Contraseña" required />
+                  <button type="button" class="password-toggle" onclick="window.rematesCliente.toggleAuthPassword(this); return false;" aria-label="${state.authPasswordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}">${state.authPasswordVisible ? "🙈" : "👁"}</button>
+                </div>
+                <button class="primary" type="submit">${isLogin ? "Entrar" : "Crear cuenta"}</button>
+              </form>
+            `;
+  const actions = isLogin ? `
+              <button type="button" class="ghost" onclick="window.rematesCliente.switchAuth('reset-request'); return false;">Olvidé mi contraseña</button>
+              <button type="button" class="ghost" onclick="window.rematesCliente.switchAuth('register'); return false;">Necesito una cuenta</button>
+              <button type="button" class="ghost" onclick="window.rematesCliente.closeAuth(); return false;">Cancelar</button>
+            ` : isRegister ? `
+              <button type="button" class="ghost" onclick="window.rematesCliente.switchAuth('login'); return false;">Ya tengo cuenta</button>
+              <button type="button" class="ghost" onclick="window.rematesCliente.closeAuth(); return false;">Cancelar</button>
+            ` : `
+              <button type="button" class="ghost" onclick="window.rematesCliente.switchAuth('login'); return false;">Ya tengo cuenta</button>
+              <button type="button" class="ghost" onclick="window.rematesCliente.closeAuth(); return false;">Cancelar</button>
+            `;
+
   return `
     <div class="auth-backdrop" data-action="close-auth" onclick="window.rematesCliente.closeAuth()">
       <div class="auth-card" data-modal-card="true" onclick="event.stopPropagation()">
         <div class="auth-grid">
           <div>
             <div class="kicker">Acceso seguro</div>
-            <h2>${state.authMode === "login" ? "Entrar a tu dashboard" : "Crear cuenta"}</h2>
-            <p>${state.authMode === "login"
-              ? "Inicia sesión para consultar tus expedientes, pagos y mensajes."
-              : "Crea tu cuenta para guardar inmuebles, consultar fechas y avanzar con acompañamiento por etapas."}</p>
-            <div class="inline-actions">
+            <h2>${title}</h2>
+            <p>${copy}</p>
+            ${isLogin || isRegister ? `<div class="inline-actions">
               <button type="button" class="ghost" data-action="social-login" data-provider="google">Continuar con Google</button>
               <button type="button" class="ghost" data-action="social-login" data-provider="facebook">Continuar con Facebook</button>
-            </div>
+            </div>` : ""}
           </div>
           <div>
-            <form class="form-grid" data-form="${state.authMode}">
-              ${state.authMode === "register" ? `
-                <input name="fullName" placeholder="Nombre completo" autocomplete="name" required />
-                <select name="gender" required>
-                  <option value="">Cómo prefieres que te demos la bienvenida</option>
-                  <option value="FEMALE">Bienvenida</option>
-                  <option value="MALE">Bienvenido</option>
-                  <option value="UNSPECIFIED">Prefiero un saludo neutral</option>
-                </select>
-              ` : ""}
-              <input name="email" type="email" placeholder="Correo electrónico" autocomplete="${state.authMode === "login" ? "username" : "email"}" required />
-              ${state.authMode === "register" ? `<input name="phone" placeholder="Teléfono" autocomplete="tel" />` : ""}
-              <div class="password-field">
-                <input name="password" type="${state.authPasswordVisible ? "text" : "password"}" autocomplete="${state.authMode === "login" ? "current-password" : "new-password"}" placeholder="Contraseña" required />
-                <button type="button" class="password-toggle" onclick="window.rematesCliente.toggleAuthPassword(this); return false;" aria-label="${state.authPasswordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}">${state.authPasswordVisible ? "🙈" : "👁"}</button>
-              </div>
-              <button class="primary" type="submit">${state.authMode === "login" ? "Entrar" : "Crear cuenta"}</button>
-            </form>
+            ${authForm}
             <div class="inline-actions">
-              <button type="button" class="ghost" onclick="window.rematesCliente.switchAuth('${state.authMode === "login" ? "register" : "login"}'); return false;">${state.authMode === "login" ? "Necesito una cuenta" : "Ya tengo cuenta"}</button>
-              <button type="button" class="ghost" onclick="window.rematesCliente.closeAuth(); return false;">Cancelar</button>
+              ${actions}
             </div>
           </div>
         </div>

@@ -283,6 +283,7 @@ export function createSeedData() {
       }
     ],
     paymentWebhookEvents: [],
+    passwordResetTokens: [],
     conversations: [
       {
         id: primaryConversationId,

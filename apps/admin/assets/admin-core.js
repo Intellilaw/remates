@@ -9,6 +9,9 @@
   showInternalUserForm: false,
   selectedExternalUserId: null,
   clientPreview: null,
+  passwordResetMode: new URLSearchParams(window.location.search).get("resetToken") ? "confirm" : "login",
+  passwordResetToken: new URLSearchParams(window.location.search).get("resetToken") || "",
+  passwordResetUrl: "",
   toast: "",
 };
 
@@ -19,7 +22,7 @@ const currencyFormatter = new Intl.NumberFormat("es-MX", {
 });
 const dateFormatter = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" });
 const app = document.querySelector("#app");
-const APP_VERSION = "Versión 1.2";
+const APP_VERSION = "Versión 1.3";
 const STAFF_ROLES = ["SALES", "LEGAL", "FINANCE", "CONTENT", "ADMIN"];
 const STAGE_LABELS = {
   LEAD: "Interés inicial",

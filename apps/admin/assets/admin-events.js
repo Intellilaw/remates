@@ -36,6 +36,20 @@ document.addEventListener("click", async (event) => {
       logout();
     }
 
+    if (target.dataset.action === "password-reset-request") {
+      state.passwordResetMode = "request";
+      state.passwordResetUrl = "";
+      render();
+    }
+
+    if (target.dataset.action === "password-reset-cancel") {
+      state.passwordResetMode = "login";
+      state.passwordResetToken = "";
+      state.passwordResetUrl = "";
+      window.history.replaceState({}, "", "/admin");
+      render();
+    }
+
     if (target.dataset.action === "toggle-internal-user-form") {
       state.showInternalUserForm = !state.showInternalUserForm;
       render();
@@ -141,6 +155,31 @@ document.addEventListener("submit", async (event) => {
       localStorage.setItem("remates_staff_token", payload.token);
       await loadSession();
       toast("Sesión iniciada");
+    }
+
+    if (formName === "password-reset-request") {
+      const payload = await api("/api/auth/password-reset/request", {
+        method: "POST",
+        body: JSON.stringify({ email: formData.get("email"), app: "admin" })
+      });
+      state.passwordResetUrl = payload.resetUrl || "";
+      state.passwordResetMode = "sent";
+      toast("Revisa tu correo de recuperación");
+    }
+
+    if (formName === "password-reset-confirm") {
+      await api("/api/auth/password-reset/confirm", {
+        method: "POST",
+        body: JSON.stringify({
+          token: state.passwordResetToken,
+          password: formData.get("password")
+        })
+      });
+      state.passwordResetMode = "login";
+      state.passwordResetToken = "";
+      state.passwordResetUrl = "";
+      window.history.replaceState({}, "", "/admin");
+      toast("Contraseña actualizada. Ya puedes iniciar sesión.");
     }
 
     if (formName === "internal-user-create") {

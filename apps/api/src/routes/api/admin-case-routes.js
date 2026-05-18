@@ -1,7 +1,8 @@
 import { mutateDb } from "../../data/store.js";
+import { exposeUser } from "../../services/auth-service.js";
 import { badRequest, notFound, readJsonBody, sendJson } from "../../utils/http.js";
 import { randomId, sanitizeText } from "../../utils/security.js";
-import { CASE_STATUSES, STAFF_ACCESS_ROLES, caseSnapshot, logAudit, requireRoles } from "../../domain/app-domain.js";
+import { CASE_STATUSES, STAFF_ACCESS_ROLES, STAGE_ORDER, caseSnapshot, logAudit, requireRoles } from "../../domain/app-domain.js";
 
 export async function handleAdminCaseRoutes(req, res, pathname, { db, actor }) {
   if (pathname === "/api/admin/cases" && req.method === "GET") {
