@@ -8,6 +8,12 @@ const webRoot = path.resolve(__dirname, "../../../web");
 const adminRoot = path.resolve(__dirname, "../../../admin");
 const mobileRoot = path.resolve(__dirname, "../../../mobile");
 const sharedRoot = path.resolve(__dirname, "../../../shared");
+const sharedAssetNames = new Set(["app-version.js", "court-options.js"]);
+
+function sharedAssetPath(pathname, prefix) {
+  const assetName = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : "";
+  return sharedAssetNames.has(assetName) ? path.join(sharedRoot, assetName) : "";
+}
 
 export async function handleStatic(res, pathname) {
   if (pathname === "/admin" || pathname === "/admin/") {
@@ -23,16 +29,18 @@ export async function handleStatic(res, pathname) {
   }
 
   if (pathname.startsWith("/admin/assets/")) {
-    if (pathname === "/admin/assets/app-version.js") {
-      return serveFile(res, path.join(sharedRoot, "app-version.js"));
+    const sharedAsset = sharedAssetPath(pathname, "/admin/assets/");
+    if (sharedAsset) {
+      return serveFile(res, sharedAsset);
     }
 
     return serveFile(res, path.join(adminRoot, pathname.replace("/admin/", "")));
   }
 
   if (pathname.startsWith("/mobile/assets/")) {
-    if (pathname === "/mobile/assets/app-version.js") {
-      return serveFile(res, path.join(sharedRoot, "app-version.js"));
+    const sharedAsset = sharedAssetPath(pathname, "/mobile/assets/");
+    if (sharedAsset) {
+      return serveFile(res, sharedAsset);
     }
 
     return serveFile(res, path.join(mobileRoot, pathname.replace("/mobile/", "")));
@@ -43,8 +51,9 @@ export async function handleStatic(res, pathname) {
   }
 
   if (pathname.startsWith("/assets/")) {
-    if (pathname === "/assets/app-version.js") {
-      return serveFile(res, path.join(sharedRoot, "app-version.js"));
+    const sharedAsset = sharedAssetPath(pathname, "/assets/");
+    if (sharedAsset) {
+      return serveFile(res, sharedAsset);
     }
 
     return serveFile(res, path.join(webRoot, pathname));

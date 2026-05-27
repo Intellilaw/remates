@@ -5,6 +5,7 @@ const nativeApiBaseUrl = document.querySelector('meta[name="api-base-url"]')?.co
 const isNativeShell = Boolean(window.Capacitor?.isNativePlatform?.()) || window.location.protocol === "capacitor:";
 const logoSrc = "assets/legalflow-logo.png";
 const APP_VERSION = window.REMATES_APP_VERSION_LABEL || "Versión local";
+const COURT_OPTIONS = Array.isArray(window.REMATES_COURT_OPTIONS) ? window.REMATES_COURT_OPTIONS : [];
 
 const state = {
   token: localStorage.getItem(tokenKey) || "",
@@ -229,7 +230,9 @@ function renderReview() {
           <h2>Datos del remate</h2>
           <label>
             <span>Juzgado del remate</span>
-            <textarea name="courtName" rows="2" required>${fieldValue(state.draft.courtName)}</textarea>
+            <select name="courtName" required>
+              ${renderCourtOptions(state.draft.courtName)}
+            </select>
           </label>
           <div class="two-col">
             <label>
@@ -347,6 +350,16 @@ function auctionRoundLabel(value) {
     POSTERIOR: "Posterior"
   };
   return labels[value] || value;
+}
+
+function renderCourtOptions(selectedCourt = "") {
+  const selected = String(selectedCourt || "");
+  const hasSelectedCourt = selected && !COURT_OPTIONS.includes(selected);
+  return `
+    <option value="">Selecciona juzgado</option>
+    ${hasSelectedCourt ? `<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)}</option>` : ""}
+    ${COURT_OPTIONS.map((court) => `<option value="${escapeHtml(court)}" ${selected === court ? "selected" : ""}>${escapeHtml(court)}</option>`).join("")}
+  `;
 }
 
 function formToDraft(form) {

@@ -1,7 +1,8 @@
-const CACHE_NAME = "intellilaw-remates-mobile-v3";
+const CACHE_NAME = "intellilaw-remates-mobile-v4";
 const APP_SHELL = [
   "/mobile/",
   "/mobile/assets/app-version.js",
+  "/mobile/assets/court-options.js",
   "/mobile/assets/mobile.css",
   "/mobile/assets/mobile-app.js",
   "/mobile/assets/app-icon-192.png",
