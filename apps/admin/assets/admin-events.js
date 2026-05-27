@@ -55,6 +55,11 @@ document.addEventListener("click", async (event) => {
       render();
     }
 
+    if (target.dataset.action === "toggle-external-user-form") {
+      state.showExternalUserForm = !state.showExternalUserForm;
+      render();
+    }
+
     if (target.dataset.action === "edit-user") {
       state.editingUserId = target.closest("[data-user-id]")?.dataset.userId || null;
       render();
@@ -119,6 +124,29 @@ document.addEventListener("click", async (event) => {
       toast("Inmueble eliminado");
     }
 
+    if (target.dataset.action === "edit-property") {
+      state.editingPropertyId = target.closest("[data-property-id]")?.dataset.propertyId || null;
+      render();
+    }
+
+    if (target.dataset.action === "cancel-property-edit") {
+      state.editingPropertyId = null;
+      render();
+    }
+
+    if (target.dataset.action === "recalculate-property-bid") {
+      const form = target.closest("form");
+      const legalBidInput = form?.querySelector('[name="legalBidMxn"]');
+      const discountInput = form?.querySelector('[name="discountPct"]');
+      const estimated = parseCurrencyValue(form?.querySelector('[name="estimatedValueMxn"]')?.value || 0);
+      const legalBid = Math.round((estimated * 2) / 3);
+      if (legalBid && legalBidInput && discountInput) {
+        legalBidInput.value = formatCurrencyInputValue(legalBid);
+        discountInput.value = "33";
+        toast(`Postura recalculada: ${money(legalBid)}`);
+      }
+    }
+
     if (target.dataset.action === "void-payment") {
       const paymentId = target.dataset.paymentId;
       if (!paymentId) return;
@@ -131,6 +159,42 @@ document.addEventListener("click", async (event) => {
 
   } catch (error) {
     toast(error.message);
+  }
+});
+
+document.addEventListener("input", (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement)) return;
+
+  if (input.matches("[data-currency-input]")) {
+    input.value = formatCurrencyInputValue(input.value);
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+
+  const form = input.closest('form[data-form="property-create"]');
+  if (!form) return;
+
+  if (input.name === "slug") {
+    input.dataset.generatedSlug = "false";
+  }
+
+  if (input.name === "title") {
+    const slugInput = form.querySelector('[name="slug"]');
+    if (slugInput instanceof HTMLInputElement && slugInput.dataset.generatedSlug !== "false") {
+      slugInput.value = slugify(input.value);
+    }
+  }
+});
+
+document.addEventListener("change", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLSelectElement) || !target.matches("[data-autosave-property-select]")) {
+    return;
+  }
+
+  const form = target.closest('form[data-form="property-update"]');
+  if (form instanceof HTMLFormElement) {
+    form.requestSubmit();
   }
 });
 
@@ -201,6 +265,27 @@ document.addEventListener("submit", async (event) => {
       toast("Usuario interno creado");
     }
 
+    if (formName === "external-user-create") {
+      const payload = await api("/api/admin/users", {
+        method: "POST",
+        body: JSON.stringify({
+          fullName: formData.get("fullName"),
+          email: formData.get("email"),
+          phone: formData.get("phone"),
+          gender: formData.get("gender"),
+          password: formData.get("password"),
+          roles: ["CLIENT"],
+          status: "ACTIVE"
+        })
+      });
+      form.reset();
+      state.showExternalUserForm = false;
+      state.selectedExternalUserId = payload.item.id;
+      await loadSession();
+      state.activeSection = "externalUsers";
+      toast("Usuario externo creado");
+    }
+
     if (formName === "property-create") {
       await api("/api/admin/properties", {
         method: "POST",
@@ -210,8 +295,8 @@ document.addEventListener("submit", async (event) => {
           state: formData.get("state"),
           city: formData.get("city"),
           zoneLabel: formData.get("zoneLabel"),
-          estimatedValueMxn: Number(formData.get("estimatedValueMxn")),
-          legalBidMxn: Number(formData.get("legalBidMxn")),
+          estimatedValueMxn: parseCurrencyValue(formData.get("estimatedValueMxn")),
+          legalBidMxn: parseCurrencyValue(formData.get("legalBidMxn")),
           discountPct: Number(formData.get("discountPct")),
           auctionRound: formData.get("auctionRound"),
           shortDescription: formData.get("shortDescription"),
@@ -221,7 +306,11 @@ document.addEventListener("submit", async (event) => {
           fullAddress: formData.get("fullAddress"),
           legalSummary: formData.get("legalSummary"),
           riskNotes: formData.get("riskNotes"),
-          publicStatus: "PUBLISHED"
+          featured: formData.get("featured") === "on",
+          tags: String(formData.get("tags") || "")
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
         })
       });
       form.reset();
@@ -231,13 +320,37 @@ document.addEventListener("submit", async (event) => {
     }
 
     if (formName === "property-update") {
+      const featuredValues = formData.getAll("featured").map((value) => String(value));
+      const body = {
+        publicStatus: formData.get("publicStatus"),
+        featured: featuredValues.includes("true") || featuredValues.includes("on")
+      };
+      [
+        "title",
+        "state",
+        "city",
+        "zoneLabel",
+        "auctionRound",
+        "shortDescription",
+        "auctionDate",
+        "auctionTime",
+        "courtName",
+        "fullAddress"
+      ].forEach((field) => {
+        if (formData.has(field)) {
+          body[field] = formData.get(field);
+        }
+      });
+      ["estimatedValueMxn", "legalBidMxn", "discountPct"].forEach((field) => {
+        if (formData.has(field)) {
+          body[field] = field === "discountPct" ? Number(formData.get(field)) : parseCurrencyValue(formData.get(field));
+        }
+      });
       await api(`/api/admin/properties/${formData.get("propertyId")}`, {
         method: "PATCH",
-        body: JSON.stringify({
-          publicStatus: formData.get("publicStatus"),
-          featured: formData.get("featured") === "true"
-        })
+        body: JSON.stringify(body)
       });
+      state.editingPropertyId = null;
       await loadSession();
       state.activeSection = "properties";
       toast("Inmueble actualizado");

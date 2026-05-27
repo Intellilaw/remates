@@ -1,4 +1,5 @@
 import { mutateDb } from "../../data/store.js";
+import { describeDatabaseTarget } from "../../data/prisma-client.js";
 import { config } from "../../config.js";
 import { authProviders, createAuthResponse, exposeUser, loginUser, registerUser, socialDemoLogin } from "../../services/auth-service.js";
 import { confirmMockPayment, createCheckout } from "../../services/payment-service.js";
@@ -6,11 +7,22 @@ import { badRequest, forbidden, notFound, readJsonBody, sendJson, unauthorized }
 import { hashPassword, normalizeEmail, randomId, sanitizeText } from "../../utils/security.js";
 import { actorCanAccessCase, caseSnapshot, getServiceStage, logAudit, propertyAccessForActor, propertySnapshot, requireAuth, stageProgress } from "../../domain/app-domain.js";
 
+const PUBLIC_PROPERTY_STATUS_ALIASES = {
+  PUBLISHED: "PUBLISHED",
+  PUBLICADO: "PUBLISHED",
+  SOLD: "SOLD",
+  VENDIDO: "SOLD",
+  DELIVERED: "DELIVERED",
+  ENTREGADO: "DELIVERED"
+};
+const PUBLIC_PROPERTY_STATUSES = new Set(["PUBLISHED", "SOLD", "DELIVERED"]);
+
 export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
   if (pathname === "/api/health" && req.method === "GET") {
     return sendJson(res, 200, {
       ok: true,
       env: config.appEnv,
+      database: describeDatabaseTarget(),
       authMode: config.authMode,
       paymentsMode: config.mercadoPagoMode
     });
@@ -157,10 +169,10 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
 
   if (pathname === "/api/properties" && req.method === "GET") {
     const properties = db.properties
-      .filter((property) => property.publicStatus === "PUBLISHED")
+      .filter((property) => isPublicProperty(property))
       .sort((left, right) => Number(right.featured) - Number(left.featured));
     return sendJson(res, 200, {
-      items: properties.map((property) => propertySnapshot(db, property, actor))
+      items: properties.map((property) => publicPropertySnapshot(db, property, actor))
     });
   }
 
@@ -168,12 +180,12 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
   if (propertyMatch && req.method === "GET") {
     const slug = propertyMatch[1];
     const property = db.properties.find((item) => item.slug === slug);
-    if (!property) {
+    if (!property || !isPublicProperty(property)) {
       return notFound(res, "Inmueble no encontrado");
     }
     const access = propertyAccessForActor(db, property, actor);
     return sendJson(res, 200, {
-      item: propertySnapshot(db, property, actor),
+      item: publicPropertySnapshot(db, property, actor),
       gated: !access.showFullDetails,
       entitlements: access
     });
@@ -431,4 +443,20 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
 
 
   return false;
+}
+
+function normalizePublicPropertyStatus(status) {
+  return PUBLIC_PROPERTY_STATUS_ALIASES[String(status || "").toUpperCase()] || String(status || "").toUpperCase();
+}
+
+function isPublicProperty(property) {
+  return PUBLIC_PROPERTY_STATUSES.has(normalizePublicPropertyStatus(property.publicStatus));
+}
+
+function publicPropertySnapshot(db, property, actor) {
+  const snapshot = propertySnapshot(db, property, actor);
+  return {
+    ...snapshot,
+    publicStatus: normalizePublicPropertyStatus(snapshot.publicStatus)
+  };
 }

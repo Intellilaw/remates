@@ -198,3 +198,12 @@ textarea,
 .properties-grid {
   grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
 }
+
+.empty-state {
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  color: var(--slate-500);
+  background: rgba(248, 251, 255, 0.72);
+  line-height: 1.45;
+}

@@ -1,0 +1,2 @@
+window.REMATES_APP_VERSION = "1.5";
+window.REMATES_APP_VERSION_LABEL = `Versi\u00f3n ${window.REMATES_APP_VERSION}`;

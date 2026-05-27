@@ -14,3 +14,6 @@ jwt_secret = "replace-with-a-long-random-secret"
 mercado_pago_mode = "mock"
 mercado_pago_access_token = ""
 mercado_pago_webhook_secret = ""
+
+openai_api_key = ""
+openai_extraction_model = "gpt-4.1-mini"

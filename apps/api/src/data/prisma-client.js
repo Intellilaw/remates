@@ -6,6 +6,10 @@ export function hasDatabaseUrl() {
   return Boolean(databaseUrl);
 }
 
+export function describeDatabaseTarget() {
+  return databaseUrl ? "postgres" : "json-local";
+}
+
 export async function getPrisma() {
   if (!databaseUrl) {
     return null;

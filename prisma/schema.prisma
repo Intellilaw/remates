@@ -81,6 +81,7 @@ model UserRole {
 
 model Property {
   id                String   @id
+  displayId         String   @unique @map("display_id")
   slug              String   @unique
   title             String
   state             String

@@ -43,6 +43,11 @@ function handler(event) {
     return request;
   }
 
+  if (uri === "/mobile" || uri === "/mobile/") {
+    request.uri = "/mobile/index.html";
+    return request;
+  }
+
   return request;
 }
 EOT

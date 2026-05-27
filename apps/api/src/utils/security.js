@@ -1,4 +1,5 @@
 ﻿import crypto from "node:crypto";
+import { normalizeDisplayText } from "./text-normalization.js";
 
 export function randomId(prefix = "id") {
   return `${prefix}_${crypto.randomUUID().replace(/-/g, "")}`;
@@ -9,7 +10,7 @@ export function normalizeEmail(value = "") {
 }
 
 export function sanitizeText(value = "", maxLength = 2000) {
-  return String(value).replace(/\s+/g, " ").trim().slice(0, maxLength);
+  return normalizeDisplayText(value).replace(/\s+/g, " ").trim().slice(0, maxLength);
 }
 
 export function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {

@@ -81,6 +81,17 @@ variable "mercado_pago_webhook_secret" {
   default   = ""
 }
 
+variable "openai_api_key" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "openai_extraction_model" {
+  type    = string
+  default = "gpt-4.1-mini"
+}
+
 locals {
   name      = "${var.project_name}-${var.environment}"
   image_uri = var.container_image != "" ? var.container_image : "${aws_ecr_repository.api.repository_url}:latest"
@@ -285,6 +296,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     JWT_SECRET                  = var.jwt_secret
     MERCADO_PAGO_ACCESS_TOKEN   = var.mercado_pago_access_token
     MERCADO_PAGO_WEBHOOK_SECRET = var.mercado_pago_webhook_secret
+    OPENAI_API_KEY              = var.openai_api_key
   })
 }
 
@@ -369,13 +381,15 @@ resource "aws_ecs_task_definition" "api" {
       { name = "MERCADO_PAGO_MODE", value = var.mercado_pago_mode },
       { name = "PUBLIC_WEB_URL", value = local.app_url },
       { name = "PUBLIC_ADMIN_URL", value = "${local.app_url}/admin" },
+      { name = "OPENAI_EXTRACTION_MODEL", value = var.openai_extraction_model },
       { name = "DATABASE_SSL", value = "false" }
     ]
     secrets = [
       { name = "DATABASE_URL", valueFrom = "${aws_secretsmanager_secret.app.arn}:DATABASE_URL::" },
       { name = "JWT_SECRET", valueFrom = "${aws_secretsmanager_secret.app.arn}:JWT_SECRET::" },
       { name = "MERCADO_PAGO_ACCESS_TOKEN", valueFrom = "${aws_secretsmanager_secret.app.arn}:MERCADO_PAGO_ACCESS_TOKEN::" },
-      { name = "MERCADO_PAGO_WEBHOOK_SECRET", valueFrom = "${aws_secretsmanager_secret.app.arn}:MERCADO_PAGO_WEBHOOK_SECRET::" }
+      { name = "MERCADO_PAGO_WEBHOOK_SECRET", valueFrom = "${aws_secretsmanager_secret.app.arn}:MERCADO_PAGO_WEBHOOK_SECRET::" },
+      { name = "OPENAI_API_KEY", valueFrom = "${aws_secretsmanager_secret.app.arn}:OPENAI_API_KEY::" }
     ]
     healthCheck = {
       command     = ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]

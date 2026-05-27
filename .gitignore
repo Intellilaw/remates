@@ -4,6 +4,7 @@ node_modules/
 !.env.example
 
 apps/api/src/data/runtime-db.json
+.remates-local-proxy-overrides.json
 
 *.log
 
@@ -13,3 +14,7 @@ apps/api/src/data/runtime-db.json
 *.tfplan
 tfplan
 infra/terraform/terraform.tfvars
+
+dist/
+android/.gradle/
+android/**/build/

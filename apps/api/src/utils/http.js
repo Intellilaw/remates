@@ -1,11 +1,13 @@
 ﻿import fs from "node:fs/promises";
 import path from "node:path";
+import { normalizeTextTree } from "./text-normalization.js";
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".jpg": "image/jpeg",
@@ -18,7 +20,7 @@ export function sendJson(res, statusCode, payload) {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store"
   });
-  res.end(JSON.stringify(payload));
+  res.end(JSON.stringify(normalizeTextTree(payload)));
 }
 
 export function sendText(res, statusCode, payload, contentType = "text/plain; charset=utf-8") {
@@ -27,6 +29,14 @@ export function sendText(res, statusCode, payload, contentType = "text/plain; ch
     "Cache-Control": "no-store"
   });
   res.end(payload);
+}
+
+export function redirect(res, location, statusCode = 308) {
+  res.writeHead(statusCode, {
+    Location: location,
+    "Cache-Control": "no-store"
+  });
+  res.end();
 }
 
 export async function readJsonBody(req, maxBytes = 1024 * 1024) {

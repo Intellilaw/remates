@@ -29,6 +29,7 @@ CREATE TABLE user_roles (
 
 CREATE TABLE properties (
   id TEXT PRIMARY KEY,
+  display_id TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   state TEXT NOT NULL,

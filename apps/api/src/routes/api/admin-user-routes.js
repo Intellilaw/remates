@@ -4,6 +4,53 @@ import { badRequest, notFound, readJsonBody, sendJson } from "../../utils/http.j
 import { hashPassword, normalizeEmail, randomId, sanitizeText } from "../../utils/security.js";
 import { STAFF_ACCESS_ROLES, USER_ROLES, USER_STATUSES, caseSnapshot, computeOverview, logAudit, requireRoles } from "../../domain/app-domain.js";
 
+function removeUserReferences(draft, userId) {
+  const deletedCaseIds = new Set(draft.cases.filter((item) => item.userId === userId).map((item) => item.id));
+  const deletedConversationIds = new Set(
+    draft.conversations.filter((item) => deletedCaseIds.has(item.caseId)).map((item) => item.id)
+  );
+
+  draft.authIdentities = draft.authIdentities.filter((identity) => identity.userId !== userId);
+  draft.passwordResetTokens = (draft.passwordResetTokens || []).filter((token) => token.userId !== userId);
+
+  draft.cases = draft.cases
+    .filter((item) => !deletedCaseIds.has(item.id))
+    .map((item) => ({
+      ...item,
+      assignedStaffUserId: item.assignedStaffUserId === userId ? null : item.assignedStaffUserId
+    }));
+
+  draft.caseEvents = draft.caseEvents
+    .filter((item) => !deletedCaseIds.has(item.caseId))
+    .map((item) => ({
+      ...item,
+      actorUserId: item.actorUserId === userId ? null : item.actorUserId
+    }));
+
+  draft.payments = draft.payments.filter((item) => !deletedCaseIds.has(item.caseId));
+  draft.conversations = draft.conversations.filter((item) => !deletedConversationIds.has(item.id));
+  draft.conversationParticipants = draft.conversationParticipants.filter(
+    (item) => item.userId !== userId && !deletedConversationIds.has(item.conversationId)
+  );
+  draft.messages = draft.messages.filter(
+    (item) => item.senderUserId !== userId && !deletedConversationIds.has(item.conversationId)
+  );
+  draft.internalNotes = draft.internalNotes.filter(
+    (item) => item.authorUserId !== userId && !deletedCaseIds.has(item.caseId)
+  );
+
+  draft.conversionEvents = draft.conversionEvents.map((item) => ({
+    ...item,
+    userId: item.userId === userId ? null : item.userId,
+    caseId: deletedCaseIds.has(item.caseId) ? null : item.caseId
+  }));
+
+  draft.auditLogs = draft.auditLogs.map((item) => ({
+    ...item,
+    actorUserId: item.actorUserId === userId ? null : item.actorUserId
+  }));
+}
+
 export async function handleAdminUserRoutes(req, res, pathname, { db, actor }) {
   if (pathname === "/api/admin/overview" && req.method === "GET") {
     if (!requireRoles(res, actor, STAFF_ACCESS_ROLES)) {
@@ -38,6 +85,7 @@ export async function handleAdminUserRoutes(req, res, pathname, { db, actor }) {
       const email = normalizeEmail(body.email);
       const fullName = sanitizeText(body.fullName || "", 120);
       const phone = sanitizeText(body.phone || "", 40);
+      const gender = ["FEMALE", "MALE", "UNSPECIFIED"].includes(body.gender) ? body.gender : "UNSPECIFIED";
       const password = String(body.password || "");
       const roles = [...new Set((Array.isArray(body.roles) ? body.roles : [])
         .map((role) => String(role).trim().toUpperCase())
@@ -47,8 +95,11 @@ export async function handleAdminUserRoutes(req, res, pathname, { db, actor }) {
       if (!email || !fullName || password.length < 8) {
         throw new Error("Nombre, correo y contraseña de al menos 8 caracteres son obligatorios");
       }
-      if (!roles.length || roles.some((role) => !USER_ROLES.includes(role)) || !roles.some((role) => STAFF_ACCESS_ROLES.includes(role))) {
+      if (!roles.length || roles.some((role) => !USER_ROLES.includes(role))) {
         throw new Error("El usuario interno necesita al menos un rol interno válido");
+      }
+      if (roles.includes("CLIENT") && roles.some((role) => STAFF_ACCESS_ROLES.includes(role))) {
+        throw new Error("Un usuario externo no puede combinar roles internos");
       }
       if (!USER_STATUSES.includes(status)) {
         throw new Error("Estatus inválido");
@@ -64,6 +115,7 @@ export async function handleAdminUserRoutes(req, res, pathname, { db, actor }) {
           email,
           fullName,
           phone,
+          gender,
           status,
           roles,
           salt,
@@ -199,8 +251,9 @@ export async function handleAdminUserRoutes(req, res, pathname, { db, actor }) {
         if (userIndex === -1) {
           throw new Error("Usuario no encontrado");
         }
-        draft.users.splice(userIndex, 1);
-        draft.authIdentities = draft.authIdentities.filter((identity) => identity.userId !== userId);
+        const [user] = draft.users.splice(userIndex, 1);
+        removeUserReferences(draft, userId);
+        logAudit(draft, actor, "USER_DELETED", "user", userId, null, exposeUser(user));
         return draft;
       });
       return sendJson(res, 204, null);

@@ -273,6 +273,28 @@ td select {
   font-size: 0.85rem;
 }
 
+.property-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.property-id-chip {
+  border: 1px solid var(--line);
+  color: var(--night);
+  background: rgba(37, 99, 235, 0.08);
+  font-weight: 700;
+}
+
+.property-card-meta .kicker {
+  color: var(--ink-soft);
+}
+
+.property-edit-form {
+  margin-top: 12px;
+}
+
 .stack { display: grid; gap: 12px; }
 .case-item { text-align: left; }
 .case-item.active { border-color: rgba(183, 144, 95, 0.6); background: rgba(183, 144, 95, 0.1); }
@@ -296,6 +318,92 @@ input, select, textarea {
   background: rgba(255,255,255,0.82);
 }
 textarea { min-height: 110px; resize: vertical; }
+
+.form-section {
+  display: grid;
+  gap: 10px;
+}
+
+.form-section + .form-section {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.form-section h3 {
+  font-size: 1rem;
+}
+
+.field-label {
+  display: grid;
+  gap: 6px;
+}
+
+.field-label span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding-left: 4px;
+}
+
+.field-label input,
+.field-label select {
+  width: 100%;
+}
+
+.field-label textarea {
+  width: 100%;
+}
+
+.currency-input {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0 12px;
+  background: rgba(255,255,255,0.82);
+}
+
+.currency-input:focus-within {
+  border-color: rgba(37, 99, 235, 0.34);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.currency-input input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 12px 0;
+  background: transparent;
+  outline: none;
+}
+
+.currency-input .currency-symbol,
+.currency-input .currency-code {
+  padding-left: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+}
 
 .password-field {
   position: relative;

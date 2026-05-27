@@ -6,7 +6,7 @@ Target domain: `remates.legalflow.solutions`
 
 - Vercel remains the DNS host for `legalflow.solutions`.
 - CloudFront serves `remates.legalflow.solutions`.
-- S3 hosts the public web app and admin app.
+- S3 hosts the public web app, admin app, and mobile capture app.
 - CloudFront routes `/api/*` to the Application Load Balancer.
 - ECS Fargate runs the Node API in private subnets.
 - RDS PostgreSQL is private and only accepts traffic from ECS.
@@ -20,6 +20,8 @@ Target domain: `remates.legalflow.solutions`
 1. Install AWS CLI, Terraform and Docker locally.
 2. Authenticate AWS CLI with the target AWS account.
 3. Copy `infra/terraform/terraform.tfvars.example` to `infra/terraform/terraform.tfvars` and fill secrets.
+   - Set `openai_api_key` so the mobile capture app can extract remate data from photos.
+   - Keep `openai_extraction_model = "gpt-4.1-mini"` unless you intentionally test another vision-capable Responses API model.
 4. Run the first Terraform apply with `service_desired_count = 0`.
 
 ```powershell
@@ -44,6 +46,7 @@ docker push "$ECR_REPO:latest"
 ```powershell
 aws s3 sync apps/web "s3://<frontend_bucket>" --delete --exclude "assets/home-v*" --exclude "assets/app.*" --exclude "assets/client-v11.*"
 aws s3 sync apps/admin "s3://<frontend_bucket>/admin" --delete
+aws s3 sync apps/mobile "s3://<frontend_bucket>/mobile" --delete
 ```
 
 8. Add the app DNS record shown in `vercel_dns_record_for_app` to Vercel DNS:

@@ -1,0 +1,8 @@
+{
+  "appId": "com.intellilaw.remates",
+  "appName": "Intellilaw Remates",
+  "webDir": "apps/mobile",
+  "server": {
+    "androidScheme": "https"
+  }
+}

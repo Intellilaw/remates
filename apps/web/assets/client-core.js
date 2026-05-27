@@ -55,10 +55,19 @@ const PAYMENT_STATUS_LABELS = {
   VOID: "Anulado",
   FAILED: "No procesado"
 };
+const PUBLIC_PROPERTY_STATUS_ALIASES = {
+  PUBLISHED: "PUBLISHED",
+  PUBLICADO: "PUBLISHED",
+  SOLD: "SOLD",
+  VENDIDO: "SOLD",
+  DELIVERED: "DELIVERED",
+  ENTREGADO: "DELIVERED"
+};
 
 const DASHBOARD_PATH = "/dashboard";
 const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
 const isDashboardRoute = currentPath === DASHBOARD_PATH;
+const initialPropertySlug = currentPath.startsWith("/property/") ? decodeURIComponent(currentPath.replace("/property/", "")) : "";
 
 const currencyFormatter = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -69,7 +78,7 @@ const currencyFormatter = new Intl.NumberFormat("es-MX", {
 const dateFormatter = new Intl.DateTimeFormat("es-MX", {
   dateStyle: "medium"
 });
-const APP_VERSION = "Versión 1.3";
+const APP_VERSION = window.REMATES_APP_VERSION_LABEL || "Versión local";
 const initialPasswordResetToken = new URLSearchParams(window.location.search).get("resetToken") || "";
 
 const state = {
@@ -96,7 +105,7 @@ const state = {
 };
 
 const app = document.querySelector("#app");
-const WHATSAPP_LINK = "https://wa.me/525513600354?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20remates%20inmobiliarios.";
+const WHATSAPP_LINK = "https://wa.me/525624240001?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20remates%20inmobiliarios.";
 
 function renderWhatsAppIcon() {
   return `
@@ -121,7 +130,14 @@ function formatMoney(value) {
 }
 
 function formatDate(value) {
-  return value ? dateFormatter.format(new Date(value)) : "Pendiente";
+  if (!value) {
+    return "Pendiente";
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return dateFormatter.format(new Date(year, month - 1, day));
+  }
+  return dateFormatter.format(new Date(value));
 }
 
 function formatDateTime(dateValue, timeValue) {
@@ -141,6 +157,31 @@ function auctionRoundLabel(value) {
     POSTERIOR: "Posterior almoneda"
   };
   return labels[value] || "Almoneda por confirmar";
+}
+
+function normalizePublicPropertyStatus(status) {
+  return PUBLIC_PROPERTY_STATUS_ALIASES[String(status || "").toUpperCase()] || String(status || "").toUpperCase();
+}
+
+function propertyPublicStamp(property) {
+  const status = normalizePublicPropertyStatus(property?.publicStatus);
+  if (status === "SOLD") {
+    return "¡VENDIDO!";
+  }
+  if (status === "DELIVERED") {
+    return "¡ENTREGADO A ADJUDICATARIO!";
+  }
+  return "";
+}
+
+function propertyPublicStampClass(property) {
+  const status = normalizePublicPropertyStatus(property?.publicStatus).toLowerCase();
+  return status ? ` property-public-stamp--${status}` : "";
+}
+
+function renderPropertyPublicStamp(property) {
+  const label = propertyPublicStamp(property);
+  return label ? `<span class="property-public-stamp${propertyPublicStampClass(property)}">${escapeHtml(label)}</span>` : "";
 }
 
 function paymentStatusLabel(status) {
@@ -300,12 +341,20 @@ async function bootstrap() {
       api("/api/auth/providers")
     ]);
 
-    state.properties = properties.items.filter((item) => item.state === "Ciudad de México");
+    state.properties = properties.items.map((property) => ({
+      ...property,
+      publicStatus: normalizePublicPropertyStatus(property.publicStatus)
+    }));
     state.education = education.item;
     state.providers = providers;
 
     if (state.token) {
       await loadSession();
+    }
+
+    if (!isDashboardRoute && initialPropertySlug) {
+      const property = await api(`/api/properties/${encodeURIComponent(initialPropertySlug)}`);
+      state.propertyDetail = property.item;
     }
 
     render();

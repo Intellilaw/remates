@@ -13,7 +13,10 @@ function renderPropertyDrawer() {
       <div class="drawer" data-modal-card="true">
         <div class="drawer__grid">
           <div>
-            <span class="badge">${escapeHtml(state.propertyDetail.city)} · ${escapeHtml(state.propertyDetail.state)}</span>
+            <div class="drawer-status-row">
+              <span class="badge">${escapeHtml(state.propertyDetail.city)} · ${escapeHtml(state.propertyDetail.state)}</span>
+              ${renderPropertyPublicStamp(state.propertyDetail)}
+            </div>
             <h2>${escapeHtml(state.propertyDetail.title)}</h2>
             <p>${escapeHtml(state.propertyDetail.shortDescription)}</p>
             <div class="stage-strip">
@@ -202,14 +205,14 @@ function renderFooter() {
     <footer class="footer shell">
       <div class="footer-simple">
         <div class="footer-owner">
-          <img src="/assets/legalflow-logo.png" alt="LegalFlow" />
+          <img src="/assets/remates-logo.png" alt="Remates Inmobiliarios México by LegalFlow" />
           <span>Esta app pertenece a LegalFlow.</span>
         </div>
-        <a class="footer-whatsapp" href="${WHATSAPP_LINK}" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp al 55 1360 0354">
+        <a class="footer-whatsapp" href="${WHATSAPP_LINK}" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp al 56 2424 0001">
           <span class="whatsapp-icon">${renderWhatsAppIcon()}</span>
           <span class="whatsapp-copy">
             <strong>WhatsApp</strong>
-            <small>55 1360 0354</small>
+            <small>56 2424 0001</small>
           </span>
         </a>
       </div>
@@ -219,12 +222,12 @@ function renderFooter() {
 
 function renderWhatsAppContact() {
   return `
-    <a class="whatsapp-float" href="${WHATSAPP_LINK}" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp al 55 1360 0354">
+    <a class="whatsapp-float" href="${WHATSAPP_LINK}" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp al 56 2424 0001">
       <span class="whatsapp-float__icon">${renderWhatsAppIcon()}</span>
       <span class="whatsapp-float__copy">
         <span>¿Dudas?</span>
         <strong>Escríbenos por WhatsApp</strong>
-        <small>55 1360 0354</small>
+        <small>56 2424 0001</small>
       </span>
     </a>
   `;

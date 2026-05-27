@@ -7,6 +7,7 @@ import { handleAdminUserRoutes } from "./admin-user-routes.js";
 import { handleAdminCaseRoutes } from "./admin-case-routes.js";
 import { handleAdminPropertyRoutes } from "./admin-property-routes.js";
 import { handleAdminContentRoutes } from "./admin-content-routes.js";
+import { handleMobileRemateRoutes } from "./mobile-remate-routes.js";
 
 const routeHandlers = [
   handlePublicRoutes,
@@ -14,7 +15,8 @@ const routeHandlers = [
   handleAdminUserRoutes,
   handleAdminCaseRoutes,
   handleAdminPropertyRoutes,
-  handleAdminContentRoutes
+  handleAdminContentRoutes,
+  handleMobileRemateRoutes
 ];
 
 export async function handleApi(req, res, pathname) {

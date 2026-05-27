@@ -120,9 +120,17 @@ function renderExternalUsers() {
   }
 
   return `
+    <section class="stack">
+      <div class="section-heading">
+        <div>
+          <div class="kicker">Usuarios externos</div>
+          <h2>Clientes registrados</h2>
+        </div>
+        <button class="primary" data-action="toggle-external-user-form" type="button">${state.showExternalUserForm ? "Cancelar" : "Crear usuario"}</button>
+      </div>
+      ${state.showExternalUserForm ? renderExternalUserForm() : ""}
+    </section>
     ${renderUsersTable({
-      kicker: "Usuarios externos",
-      title: "Clientes registrados",
       users: externalUsers,
       emptyMessage: "No hay usuarios externos.",
       showTracking: true
@@ -141,6 +149,29 @@ function renderInternalUserForm() {
         </div>
         <input name="password" type="password" placeholder="Contraseña inicial" autocomplete="new-password" minlength="8" required />
         <button class="primary" type="submit">Guardar usuario interno</button>
+      </form>
+    </div>
+  `;
+}
+
+function renderExternalUserForm() {
+  return `
+    <div class="panel inline-form">
+      <form data-form="external-user-create">
+        <div class="two-col">
+          <input name="fullName" placeholder="Nombre completo" required />
+          <input name="email" type="email" placeholder="Correo" required />
+        </div>
+        <div class="two-col">
+          <input name="phone" placeholder="Teléfono" />
+          <select name="gender">
+            <option value="UNSPECIFIED">Género no especificado</option>
+            <option value="FEMALE">Mujer</option>
+            <option value="MALE">Hombre</option>
+          </select>
+        </div>
+        <input name="password" type="password" placeholder="Contraseña inicial" autocomplete="new-password" minlength="8" required />
+        <button class="primary" type="submit">Guardar usuario externo</button>
       </form>
     </div>
   `;
@@ -321,6 +352,120 @@ function renderUserRow(user, { showTracking = false } = {}) {
   `;
 }
 
+function renderCourtOptions(selectedCourt = "") {
+  const hasSelectedCourt = selectedCourt && !COURT_OPTIONS.includes(selectedCourt);
+  return `
+    <option value="">Selecciona juzgado</option>
+    ${hasSelectedCourt ? `<option value="${escapeHtml(selectedCourt)}" selected>${escapeHtml(selectedCourt)}</option>` : ""}
+    ${COURT_OPTIONS.map((court) => `<option value="${escapeHtml(court)}" ${selectedCourt === court ? "selected" : ""}>${escapeHtml(court)}</option>`).join("")}
+  `;
+}
+
+function renderCurrencyInput(name, value = "") {
+  const valueAttribute = value === "" || value === null || value === undefined ? "" : ` value="${escapeHtml(formatCurrencyInputValue(value))}"`;
+  return `
+    <div class="currency-input">
+      <span class="currency-symbol" aria-hidden="true">$</span>
+      <input name="${name}" type="text" inputmode="numeric" autocomplete="off" data-currency-input${valueAttribute} required />
+      <span class="currency-code" aria-hidden="true">MXN</span>
+    </div>
+  `;
+}
+
+function renderPropertyEditForm(property) {
+  return `
+    <form class="property-edit-form" data-form="property-update">
+      <input type="hidden" name="propertyId" value="${property.id}" />
+      <div class="form-section">
+        <h3>Editar inmueble</h3>
+        <label class="field-label">
+          <span>Título</span>
+          <input name="title" value="${escapeHtml(property.title)}" required />
+        </label>
+        <div class="two-col">
+          <label class="field-label">
+            <span>Estado</span>
+            <input name="state" value="${escapeHtml(property.state)}" required />
+          </label>
+          <label class="field-label">
+            <span>Ciudad o alcaldía</span>
+            <input name="city" value="${escapeHtml(property.city)}" required />
+          </label>
+        </div>
+        <label class="field-label">
+          <span>Colonia</span>
+          <input name="zoneLabel" value="${escapeHtml(property.zoneLabel || "")}" required />
+        </label>
+        <div class="two-col">
+          <label class="field-label">
+            <span>Valor de avalúo</span>
+            ${renderCurrencyInput("estimatedValueMxn", Number(property.estimatedValueMxn || 0))}
+          </label>
+          <label class="field-label">
+            <span>Postura legal</span>
+            ${renderCurrencyInput("legalBidMxn", Number(property.legalBidMxn || 0))}
+          </label>
+        </div>
+        <div class="two-col">
+          <label class="field-label">
+            <span>Descuento %</span>
+            <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" value="${Number(property.discountPct || 0)}" required />
+          </label>
+          <label class="field-label">
+            <span>Almoneda</span>
+            <select name="auctionRound" required>
+              ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}" ${property.auctionRound === item ? "selected" : ""}>${escapeHtml(auctionRoundLabel(item))}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        <label class="field-label">
+          <span>Descripción</span>
+          <textarea name="shortDescription" rows="3" required>${escapeHtml(property.shortDescription || "")}</textarea>
+        </label>
+        <div class="two-col">
+          <label class="field-label">
+            <span>Fecha de almoneda</span>
+            <input name="auctionDate" type="date" value="${escapeHtml(dateInputValue(property.auctionDate))}" required />
+          </label>
+          <label class="field-label">
+            <span>Hora de la almoneda</span>
+            <input name="auctionTime" type="time" step="60" value="${escapeHtml(property.auctionTime || "")}" />
+          </label>
+        </div>
+        <label class="field-label">
+          <span>Juzgado del remate</span>
+          <select name="courtName" required>
+            ${renderCourtOptions(property.courtName || "")}
+          </select>
+        </label>
+        <label class="field-label">
+          <span>Dirección del inmueble</span>
+          <textarea name="fullAddress" rows="3" required>${escapeHtml(property.fullAddress || "")}</textarea>
+        </label>
+        <div class="two-col">
+          <label class="field-label">
+            <span>Estatus</span>
+            <select name="publicStatus">
+              ${PROPERTY_STATUS_OPTIONS.map(([value, label]) => `<option value="${value}" ${property.publicStatus === value ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+            </select>
+          </label>
+          <label class="field-label">
+            <span>Vista</span>
+            <select name="featured">
+              <option value="false" ${!property.featured ? "selected" : ""}>Normal</option>
+              <option value="true" ${property.featured ? "selected" : ""}>Destacado</option>
+            </select>
+          </label>
+        </div>
+        <div class="row-actions">
+          <button class="secondary" type="submit">Guardar cambios</button>
+          <button class="ghost" data-action="cancel-property-edit" type="button">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  `;
+}
+
 function renderProperties() {
   return `
     <section class="stack">
@@ -331,41 +476,96 @@ function renderProperties() {
       <div class="two-col">
         <div class="panel">
           <form data-form="property-create">
-            <input name="title" placeholder="Título" required />
-            <input name="slug" placeholder="URL corta" required />
-            <div class="two-col">
-              <input name="state" placeholder="Estado" required />
-              <input name="city" placeholder="Ciudad" required />
+            <div class="form-section">
+              <h3>Datos del remate</h3>
+              <label class="field-label">
+                <span>Juzgado del remate</span>
+                <select name="courtName" required>
+                  <option value="" selected disabled>Selecciona juzgado</option>
+                  ${COURT_OPTIONS.map((court) => `<option value="${escapeHtml(court)}">${escapeHtml(court)}</option>`).join("")}
+                </select>
+              </label>
+              <div class="two-col">
+                <label class="field-label">
+                  <span>Valor de avalúo</span>
+                  ${renderCurrencyInput("estimatedValueMxn")}
+                </label>
+                <label class="field-label">
+                  <span>Postura legal</span>
+                  ${renderCurrencyInput("legalBidMxn")}
+                </label>
+              </div>
+              <button class="secondary" data-action="recalculate-property-bid" type="button">Calcular 2/3</button>
+              <div class="two-col">
+                <label class="field-label">
+                  <span>Fecha de almoneda</span>
+                  <input name="auctionDate" type="date" required />
+                </label>
+                <label class="field-label">
+                  <span>Hora de la almoneda</span>
+                  <input name="auctionTime" type="time" step="60" />
+                </label>
+              </div>
+                <label class="field-label">
+                  <span>Dirección del inmueble</span>
+                <textarea name="fullAddress" rows="3" required></textarea>
+              </label>
             </div>
-            <input name="zoneLabel" placeholder="Zona" required />
-            <div class="two-col">
-              <input name="estimatedValueMxn" type="number" placeholder="Valor estimado MXN" required />
-              <input name="legalBidMxn" type="number" placeholder="Postura legal MXN" required />
+            <div class="form-section">
+              <h3>Publicación web</h3>
+              <label class="field-label">
+                <span>Título</span>
+                <input name="title" required />
+              </label>
+              <div class="two-col">
+                <label class="field-label">
+                  <span>Estado</span>
+                  <input name="state" required />
+                </label>
+                <label class="field-label">
+                  <span>Ciudad o alcaldía</span>
+                  <input name="city" required />
+                </label>
+              </div>
+              <label class="field-label">
+                <span>Colonia</span>
+                <input name="zoneLabel" required />
+              </label>
+              <div class="two-col">
+                <label class="field-label">
+                  <span>Descuento %</span>
+                  <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" required />
+                </label>
+                <label class="field-label">
+                  <span>Almoneda</span>
+                  <select name="auctionRound" required>
+                    ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}">${escapeHtml(auctionRoundLabel(item))}</option>`).join("")}
+                  </select>
+                </label>
+              </div>
+              <label class="field-label">
+                <span>Descripción</span>
+                <textarea name="shortDescription" rows="3" required></textarea>
+              </label>
+              <label class="field-label">
+                <span>Tags</span>
+                <input name="tags" />
+              </label>
+              <label class="check-row">
+                <input name="featured" type="checkbox" />
+                <span>Destacado</span>
+              </label>
             </div>
-            <div class="two-col">
-              <input name="discountPct" type="number" placeholder="Descuento %" required />
-              <select name="auctionRound" required>
-                <option value="PRIMERA">Primera almoneda</option>
-                <option value="SEGUNDA">Segunda almoneda</option>
-                <option value="POSTERIOR">Posterior almoneda</option>
-              </select>
-            </div>
-            <textarea name="shortDescription" placeholder="Descripción corta" required></textarea>
-            <div class="two-col">
-              <input name="auctionDate" type="date" placeholder="Fecha de almoneda" />
-              <input name="auctionTime" placeholder="Hora de almoneda" />
-            </div>
-            <input name="courtName" placeholder="Juzgado" />
-            <textarea name="fullAddress" placeholder="Dirección completa"></textarea>
-            <textarea name="legalSummary" placeholder="Resumen legal"></textarea>
-            <textarea name="riskNotes" placeholder="Puntos a revisar"></textarea>
-            <button class="primary" type="submit">Crear inmueble</button>
+            <button class="primary" type="submit">Publicar inmueble</button>
           </form>
         </div>
         <div class="stack">
-          ${state.properties.map((property) => `
+          ${state.properties.map((property, index) => `
             <div class="card" data-property-id="${property.id}">
-              <div class="kicker">${escapeHtml(property.publicStatus)}</div>
+              <div class="property-card-meta">
+                <span class="chip property-id-chip">${escapeHtml(propertyDisplayLabel(property, index))}</span>
+                <span class="kicker">${escapeHtml(propertyStatusLabel(property.publicStatus))}</span>
+              </div>
               <h3>${escapeHtml(property.title)}</h3>
               <p class="small">${escapeHtml(property.city)}, ${escapeHtml(property.state)}</p>
               <div class="chips">
@@ -375,20 +575,23 @@ function renderProperties() {
                 <span class="chip">-${property.discountPct}%</span>
                 <span class="chip">${property.featured ? "Destacado" : "Normal"}</span>
               </div>
+              ${state.editingPropertyId === property.id ? renderPropertyEditForm(property) : `
               <form data-form="property-update">
                 <input type="hidden" name="propertyId" value="${property.id}" />
                 <div class="two-col">
-                  <select name="publicStatus">
-                    ${["DRAFT", "PUBLISHED", "ARCHIVED"].map((item) => `<option value="${item}" ${property.publicStatus === item ? "selected" : ""}>${item}</option>`).join("")}
+                  <select name="publicStatus" data-autosave-property-select>
+                    ${PROPERTY_STATUS_OPTIONS.map(([value, label]) => `<option value="${value}" ${property.publicStatus === value ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}
                   </select>
-                  <select name="featured">
+                  <select name="featured" data-autosave-property-select>
                     <option value="false" ${!property.featured ? "selected" : ""}>Normal</option>
                     <option value="true" ${property.featured ? "selected" : ""}>Destacado</option>
                   </select>
                 </div>
                 <button class="secondary" type="submit">Actualizar</button>
               </form>
+              <button class="secondary block-action" data-action="edit-property" type="button">Editar</button>
               <button class="ghost danger block-action" data-action="delete-property" type="button">Eliminar inmueble</button>
+              `}
             </div>
           `).join("")}
         </div>

@@ -8,14 +8,9 @@ function renderTopbar() {
   const userGreeting = state.me
     ? `<div class="user-greeting" aria-label="Usuario conectado"><span>${escapeHtml(welcomeLabel(state.me))}</span><strong>${escapeHtml(firstName(state.me))}</strong></div>`
     : "";
-  const brandTag = isDashboardRoute ? "Una app de LegalFlow · Dashboard del cliente" : "Una app de LegalFlow";
   const brand = `
-    <a class="brand" href="/" aria-label="Inicio">
-      <div class="brand__logo"><img src="/assets/legalflow-logo.png" alt="LegalFlow" /></div>
-      <div>
-        <div class="brand__name">Remates Inmobiliarios México</div>
-        <div class="brand__tag">${brandTag}</div>
-      </div>
+    <a class="brand" href="/" aria-label="Remates Inmobiliarios México">
+      <img class="brand__logo" src="/assets/remates-logo.png" alt="Remates Inmobiliarios México by LegalFlow" />
     </a>
   `;
 
@@ -63,7 +58,12 @@ function renderTopbar() {
 }
 
 function renderHomeHero() {
-  const featured = state.properties.filter((item) => item.featured).slice(0, 2);
+  const featured = state.properties.filter((item) => item.featured);
+  const highlighted = (featured.length ? featured : state.properties).slice(0, 2);
+  const highlightedTitle = featured.length ? "Inmuebles destacados" : "Inmuebles publicados";
+  const highlightedCopy = highlighted.length
+    ? "Una muestra de remates activos para compradores que necesitan claridad legal, operativa y económica antes de comprometer capital."
+    : "Cuando publiques, adjudiques o entregues un inmueble desde el panel interno, aparecerá aquí automáticamente.";
 
   return `
     <section class="hero shell">
@@ -83,13 +83,16 @@ function renderHomeHero() {
         </div>
         <aside class="hero__aside">
           <div>
-            <h2 class="section-title">Inmuebles destacados</h2>
-            <p class="section-copy">Una muestra curada de remates para compradores que necesitan claridad legal, operativa y económica antes de comprometer capital.</p>
+            <h2 class="section-title">${highlightedTitle}</h2>
+            <p class="section-copy">${highlightedCopy}</p>
           </div>
-          ${featured.map((property) => `
+          ${highlighted.map((property) => `
             <div class="property-card">
               <div class="property-cover tone-${property.heroTone}">
-                <span class="badge">${escapeHtml(property.city)}</span>
+                <div class="property-cover__badges">
+                  <span class="badge">${escapeHtml(property.city)}</span>
+                  ${renderPropertyPublicStamp(property)}
+                </div>
                 <div>
                   <strong>${escapeHtml(property.title)}</strong>
                     <div>Postura legal ${formatMoney(property.legalBidMxn)}</div>
@@ -106,6 +109,7 @@ function renderHomeHero() {
               </div>
             </div>
           `).join("")}
+          ${highlighted.length ? "" : `<div class="empty-state">No hay inmuebles publicados por ahora.</div>`}
         </aside>
       </div>
       <div class="metric-strip">
@@ -228,12 +232,15 @@ function renderListings(sectionId = "listings", title = "Remates en CDMX", copy 
         </div>
       </div>
       <div class="properties-grid">
-        ${items.map((property) => {
+        ${items.length ? items.map((property) => {
           const auctionDate = property.auctionDate ? formatDate(property.auctionDate) : "Fecha por confirmar";
           return `
             <article class="property-card">
               <div class="property-cover tone-${property.heroTone}">
-                <span class="badge">${escapeHtml(property.city)}</span>
+                <div class="property-cover__badges">
+                  <span class="badge">${escapeHtml(property.city)}</span>
+                  ${renderPropertyPublicStamp(property)}
+                </div>
                 <div>
                   <div class="kicker">${escapeHtml(property.zoneLabel)}</div>
                   <strong>${escapeHtml(property.title)}</strong>
@@ -251,7 +258,7 @@ function renderListings(sectionId = "listings", title = "Remates en CDMX", copy 
               </div>
             </article>
           `;
-        }).join("")}
+        }).join("") : `<div class="empty-state">No hay inmuebles publicados con estos filtros.</div>`}
       </div>
     </section>
   `;

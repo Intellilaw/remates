@@ -43,6 +43,7 @@ export function requireRoles(res, actor, roles) {
 export function getBaseProperty(property) {
   return {
     id: property.id,
+    displayId: property.displayId,
     slug: property.slug,
     title: property.title,
     state: property.state,

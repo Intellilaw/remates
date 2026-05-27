@@ -40,6 +40,7 @@ function mapProperty(property) {
   const details = property.privateDetails;
   return {
     id: property.id,
+    displayId: property.displayId,
     slug: property.slug,
     title: property.title,
     state: property.state,
@@ -309,6 +310,7 @@ export async function writePrismaState(prisma, data) {
     await tx.property.createMany({
       data: data.properties.map((property) => ({
         id: property.id,
+        displayId: property.displayId,
         slug: property.slug,
         title: property.title,
         state: property.state,

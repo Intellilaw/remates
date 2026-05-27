@@ -7,6 +7,8 @@
     "build": "npm run db:generate && npm run lint",
     "start": "node apps/api/src/server.js",
     "reset:demo": "node apps/api/src/data/store.js --reset",
+    "mobile:sync-version": "node scripts/sync-mobile-version.js",
+    "mobile:sync": "npm run mobile:sync-version && npx cap sync android",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy"
   },
@@ -14,6 +16,9 @@
     "@prisma/client": "^6.18.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "prisma": "^6.18.0"
   }
 }

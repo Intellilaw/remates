@@ -6,6 +6,7 @@ Esta entrega incluye:
 - Sitio público con catálogo, detalle limitado y contenido educativo
 - Dashboard de cliente con expedientes, pagos por etapa y mensajería con staff
 - Intranet para operación interna con usuarios, casos, notas, contenido e inmuebles
+- App móvil/PWA para fotografiar edictos, extraer datos de remate, confirmar y publicar inmuebles
 - Backend API con RBAC y autorización por fila
 - Esquema PostgreSQL para RDS y configuración base para AWS
 - Datos demo listos para explorar localmente
@@ -15,7 +16,8 @@ Esta entrega incluye:
 ### Frontend
 - `apps/web`: sitio público y dashboard del cliente
 - `apps/admin`: intranet del equipo interno
-- En esta preview ambos se sirven desde el backend para simplificar la ejecución local.
+- `apps/mobile`: captura móvil para alta automática de remates desde fotografía
+- En esta preview las apps se sirven desde el backend para simplificar la ejecución local.
 - En AWS se sirven detrás del backend en ECS para mantener el contrato actual de rutas y API.
 
 ### Backend
@@ -49,6 +51,7 @@ node apps/api/src/server.js
 La app quedará disponible en:
 - Sitio público: [http://localhost:3000](http://localhost:3000)
 - Intranet: [http://localhost:3000/admin](http://localhost:3000/admin)
+- Captura móvil: [http://localhost:3000/mobile](http://localhost:3000/mobile)
 
 ### Resetear datos demo
 ```powershell
@@ -101,6 +104,14 @@ node apps/api/src/data/store.js --reset
 - Crear inmuebles
 - Publicar / destacar inmuebles
 - Editar contenido educativo
+
+### Captura móvil de remates
+- Login con cuenta interna `CONTENT`, `LEGAL` o `ADMIN`
+- Carga de foto desde cámara o galería
+- Extracción por visión usando `OPENAI_API_KEY` y `OPENAI_EXTRACTION_MODEL`
+- Confirmación y edición de juzgado, avalúo, postura legal, fecha y dirección
+- Cálculo automático de postura legal como 2/3 del avalúo cuando el edicto no la incluye
+- Publicación directa en el catálogo web como `PUBLISHED`
 
 ## Mercado Pago
 
