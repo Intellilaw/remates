@@ -77,7 +77,7 @@ function buildDraftFromExtraction(extraction, db) {
     legalSummary: "Datos extraidos desde edicto fotografiado y confirmados antes de publicar.",
     riskNotes: "Revisar expediente, adeudos y estatus de posesión antes de recomendar participación.",
     publicStatus: "PUBLISHED",
-    featured: false,
+    featured: true,
     tags: ["Remate"],
     heroTone: "cobalt",
     imageAccent: "#2563eb"
@@ -131,7 +131,7 @@ function buildPropertyFromInput(input, db) {
     legalSummary: sanitizeText(input.legalSummary || "", 500),
     riskNotes: sanitizeText(input.riskNotes || "", 500),
     publicStatus: "PUBLISHED",
-    featured: Boolean(input.featured),
+    featured: true,
     tags: Array.isArray(input.tags) ? input.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Remate"],
     heroTone: input.heroTone || "cobalt",
     imageAccent: input.imageAccent || "#2563eb",

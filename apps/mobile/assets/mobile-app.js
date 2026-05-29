@@ -301,10 +301,6 @@ function renderReview() {
             <span>Tags</span>
             <input name="tags" value="${escapeHtml((state.draft.tags || []).join(", "))}" />
           </label>
-          <label class="check-row">
-            <input name="featured" type="checkbox" ${state.draft.featured ? "checked" : ""} />
-            <span>Destacado</span>
-          </label>
         </div>
 
         <div class="sticky-actions">
@@ -381,7 +377,7 @@ function formToDraft(form) {
     courtName: String(formData.get("courtName") || ""),
     legalSummary: String(formData.get("legalSummary") || ""),
     riskNotes: String(formData.get("riskNotes") || ""),
-    featured: formData.get("featured") === "on",
+    featured: true,
     tags: String(formData.get("tags") || "")
       .split(",")
       .map((tag) => tag.trim())

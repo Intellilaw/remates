@@ -4,11 +4,12 @@
   "type": "module",
   "scripts": {
     "lint": "node scripts/check-syntax.js",
-    "build": "npm run db:generate && npm run lint",
+    "build": "npm run sync:shared-assets && npm run db:generate && npm run lint",
     "start": "node apps/api/src/server.js",
     "reset:demo": "node apps/api/src/data/store.js --reset",
-    "mobile:sync-version": "node scripts/sync-mobile-version.js",
-    "mobile:sync": "npm run mobile:sync-version && npx cap sync android",
+    "sync:shared-assets": "node scripts/sync-mobile-version.js",
+    "mobile:sync-version": "npm run sync:shared-assets",
+    "mobile:sync": "npm run sync:shared-assets && npx cap sync android",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy"
   },

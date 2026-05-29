@@ -15,7 +15,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
   }
 
   if (pathname === "/api/admin/properties" && req.method === "POST") {
-    if (!requireRoles(res, actor, ["CONTENT", "ADMIN", "LEGAL"])) {
+    if (!requireRoles(res, actor, STAFF_ACCESS_ROLES)) {
       return;
     }
     try {
@@ -80,7 +80,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
 
   const propertyPatchMatch = pathname.match(/^\/api\/admin\/properties\/([^/]+)$/);
   if (propertyPatchMatch && req.method === "PATCH") {
-    if (!requireRoles(res, actor, ["CONTENT", "ADMIN", "LEGAL"])) {
+    if (!requireRoles(res, actor, STAFF_ACCESS_ROLES)) {
       return;
     }
     try {
