@@ -3,6 +3,7 @@ import { badRequest, readJsonBody, sendJson } from "../../utils/http.js";
 import { nextPropertyDisplayId } from "../../utils/property-display-id.js";
 import { randomId, sanitizeText } from "../../utils/security.js";
 import { STAFF_ACCESS_ROLES, getFullProperty, logAudit, requireRoles } from "../../domain/app-domain.js";
+import { locationImageKey, resolveLocationImage } from "../../services/property-location-image-service.js";
 
 const PROPERTY_PUBLIC_STATUSES = new Set(["PUBLISHED", "DRAFT", "ARCHIVED", "SOLD", "DELIVERED"]);
 
@@ -30,6 +31,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
         const state = requiredText(normalizeStateName(body.state), "Estado", 80);
         const city = requiredText(body.city, "Ciudad o alcaldía", 80);
         const zoneLabel = requiredText(body.zoneLabel, "Colonia", 120);
+        const publicStatus = normalizePublicStatus(body.publicStatus, "PUBLISHED");
 
         if (!estimatedValueMxn) {
           throw new Error("Valor de avalúo obligatorio");
@@ -61,18 +63,22 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
           occupancyStatus: sanitizeText(body.occupancyStatus || "", 80),
           legalSummary: sanitizeText(body.legalSummary || "", 500),
           riskNotes: sanitizeText(body.riskNotes || "", 500),
-          publicStatus: normalizePublicStatus(body.publicStatus, "PUBLISHED"),
+          publicStatus,
           featured: Boolean(body.featured),
           tags: Array.isArray(body.tags) ? body.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Remate"],
           heroTone: body.heroTone || "cobalt",
           imageAccent: body.imageAccent || "#2563eb",
+          locationImage: null,
           publishedAt: new Date().toISOString()
         };
+        if (isPublishedStatus(property.publicStatus)) {
+          property.locationImage = await resolveLocationImage(property);
+        }
         draft.properties.unshift(property);
         logAudit(draft, actor, "PROPERTY_CREATED", "property", property.id, property);
         return draft;
       });
-      return sendJson(res, 201, { item: updated.properties[0] });
+      return sendJson(res, 201, { item: getFullProperty(updated.properties[0]) });
     } catch (error) {
       return badRequest(res, error.message);
     }
@@ -92,6 +98,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
           throw new Error("Inmueble no encontrado");
         }
         const before = structuredClone(property);
+        const beforeLocationKey = locationImageKey(property);
         Object.assign(property, {
           title: body.title ? sanitizeText(body.title, 120) : property.title,
           state: body.state ? sanitizeText(body.state, 80) : property.state,
@@ -114,11 +121,15 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
         if (["PUBLISHED", "SOLD", "DELIVERED"].includes(property.publicStatus) && !property.publishedAt) {
           property.publishedAt = new Date().toISOString();
         }
+        const locationChanged = beforeLocationKey !== locationImageKey(property);
+        if (isPublishedStatus(property.publicStatus) && (!property.locationImage || locationChanged)) {
+          property.locationImage = await resolveLocationImage(property);
+        }
         logAudit(draft, actor, "PROPERTY_UPDATED", "property", propertyId, property, before);
         return draft;
       });
       const item = updated.properties.find((entry) => entry.id === propertyId);
-      return sendJson(res, 200, { item });
+      return sendJson(res, 200, { item: getFullProperty(item) });
     } catch (error) {
       return badRequest(res, error.message);
     }
@@ -170,6 +181,10 @@ function normalizePublicStatus(value, fallback) {
     throw new Error("Estado de publicación inválido");
   }
   return status;
+}
+
+function isPublishedStatus(status) {
+  return ["PUBLISHED", "SOLD", "DELIVERED"].includes(status);
 }
 
 function requiredText(value, label, maxLength) {

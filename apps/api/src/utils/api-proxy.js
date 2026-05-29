@@ -2,6 +2,7 @@ import http from "node:http";
 import https from "node:https";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { buildFallbackLocationImage } from "../services/property-location-image-service.js";
 import { normalizeTextTree } from "./text-normalization.js";
 
 const overrideFilePath = path.join(process.cwd(), ".remates-local-proxy-overrides.json");
@@ -217,7 +218,7 @@ async function applyLocalProxyOverrides(requestUrl, payload, statusCode = 200, r
   }
 
   if (pathname === "/api/properties" && Array.isArray(nextPayload.items)) {
-    const merged = new Map(nextPayload.items.map((property) => [property.id, property]));
+    const merged = new Map(nextPayload.items.map((property) => [property.id, toPublicProperty(property)]));
     for (const property of overrides.cachedAdminProperties || []) {
       if (!hiddenPropertyIds.has(property.id) && isPublicProperty(property)) {
         merged.set(property.id, toPublicProperty(property));
@@ -248,6 +249,17 @@ async function applyLocalProxyOverrides(requestUrl, payload, statusCode = 200, r
         payload: {
           item,
           gated: true,
+          entitlements: item.visibility
+        }
+      };
+    }
+    if (nextPayload.item?.id && isPublicProperty(nextPayload.item)) {
+      const item = toPublicProperty(nextPayload.item);
+      return {
+        statusCode,
+        payload: {
+          ...nextPayload,
+          item,
           entitlements: item.visibility
         }
       };
@@ -302,12 +314,46 @@ function toPublicProperty(property) {
     tags: property.tags || [],
     heroTone: property.heroTone || "cobalt",
     imageAccent: property.imageAccent || "#2563eb",
+    locationImage: toPublicLocationImage(property.locationImage || buildFallbackLocationImage(property)),
     publishedAt: property.publishedAt || null,
     auctionDate: property.auctionDate || null,
+    auctionTime: property.auctionTime || "",
+    fullAddress: property.fullAddress || "",
     visibility: {
       showAuctionDate: true,
+      showAuctionTime: true,
+      showFullAddress: true,
       showCourtAndTime: false,
       showFullDetails: false
     }
   };
+}
+
+function toPublicLocationImage(locationImage) {
+  if (!locationImage) {
+    return null;
+  }
+
+  const { endpoint, params, ...safeImage } = locationImage;
+  const imageUrl = safeImage.imageUrl || buildGoogleImageUrl(endpoint, params);
+  return {
+    ...safeImage,
+    imageUrl
+  };
+}
+
+function buildGoogleImageUrl(endpoint, params) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
+  if (!endpoint || !params || !apiKey) {
+    return "";
+  }
+
+  const url = new URL(endpoint);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+  url.searchParams.set("key", apiKey);
+  return url.toString();
 }

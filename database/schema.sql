@@ -42,6 +42,7 @@ CREATE TABLE properties (
   short_description TEXT NOT NULL,
   public_status TEXT NOT NULL DEFAULT 'DRAFT',
   featured BOOLEAN NOT NULL DEFAULT FALSE,
+  location_image_json JSONB,
   published_at TIMESTAMPTZ
 );
 

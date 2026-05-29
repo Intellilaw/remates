@@ -1,4 +1,4 @@
-const CACHE_NAME = "intellilaw-remates-mobile-v5";
+const CACHE_NAME = "intellilaw-remates-mobile-v6";
 const NETWORK_FIRST_ASSETS = new Set([
   "/mobile/assets/app-version.js",
   "/mobile/assets/court-options.js"

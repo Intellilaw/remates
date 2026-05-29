@@ -5,7 +5,7 @@ function renderPropertyDrawer() {
 
   const relatedCase = findCaseByPropertyId(state.propertyDetail.id);
   const showDate = Boolean(state.propertyDetail.auctionDate);
-  const showCourtAndTime = Boolean(state.propertyDetail.courtName || state.propertyDetail.auctionTime);
+  const showCourt = Boolean(state.propertyDetail.courtName);
   const showFull = Boolean(state.propertyDetail.visibility?.showFullDetails);
 
   return `
@@ -25,48 +25,19 @@ function renderPropertyDrawer() {
               <span class="chip">${escapeHtml(auctionRoundLabel(state.propertyDetail.auctionRound))}</span>
               <span class="chip">${escapeHtml(state.propertyDetail.zoneLabel)}</span>
               ${showDate ? `<span class="chip">Subasta ${escapeHtml(formatDate(state.propertyDetail.auctionDate))}</span>` : ""}
+              ${state.propertyDetail.auctionTime ? `<span class="chip">Hora ${escapeHtml(state.propertyDetail.auctionTime)}</span>` : ""}
             </div>
 
-            ${!state.me ? `
-              <div class="section-card" style="margin-top:16px;">
-                <div class="kicker">Información limitada</div>
-                <p>Crea tu cuenta para guardar este inmueble y dar seguimiento al proceso. La fecha y postura legal son visibles; el órgano subastador, la hora y el detalle legal se liberan al contratar la primera etapa.</p>
-                <p>También te explicaremos qué ocurre con la adjudicación judicial y qué adeudos del inmueble podrían subsistir.</p>
-                <button class="primary" data-action="open-auth" data-mode="register">Crear cuenta</button>
-              </div>
-            ` : showFull ? `
-              <div class="section-card" style="margin-top:16px;">
-                <p><strong>Fecha de subasta:</strong> ${escapeHtml(formatDate(state.propertyDetail.auctionDate))}</p>
-                <p><strong>Hora de subasta:</strong> ${escapeHtml(state.propertyDetail.auctionTime || "Pendiente")}</p>
-                <p><strong>Órgano subastador:</strong> ${escapeHtml(state.propertyDetail.courtName || "Pendiente")}</p>
-                <p><strong>Postura legal:</strong> ${formatMoney(state.propertyDetail.legalBidMxn)}</p>
-                <p><strong>Dirección completa:</strong> ${escapeHtml(state.propertyDetail.fullAddress || "")}</p>
-                <div class="notice-card">
-                  <strong>Adjudicación y adeudos:</strong> la adjudicación judicial permite solicitar la cancelación de gravámenes procedentes y la entrega del inmueble, pero no necesariamente elimina adeudos de agua, predial, luz o mantenimiento.
-                </div>
-              </div>
-            ` : `
-              <div class="section-card" style="margin-top:16px;">
-                <div class="kicker">Datos visibles en esta etapa</div>
-                <p><strong>Fecha de subasta:</strong> ${showDate ? escapeHtml(formatDate(state.propertyDetail.auctionDate)) : "Por confirmar"}</p>
-                <p><strong>Postura legal:</strong> ${formatMoney(state.propertyDetail.legalBidMxn)}</p>
-                <p>El órgano subastador, la hora, la dirección completa y el detalle legal se desbloquean con la asesoría inicial de ${formatMoney(3000)}. También revisamos posibles adeudos de servicios, predial y mantenimiento antes de que decidas avanzar.</p>
-                <div class="inline-actions">
-                  ${relatedCase?.progress?.nextStageCode === "ADVISORY" && relatedCase.progress.canPurchaseNextStage
-                    ? `<button class="primary" data-action="checkout" data-case-id="${relatedCase.id}" data-stage-code="ADVISORY">Desbloquear asesoría inicial</button>`
-                    : `<a class="primary" href="${DASHBOARD_PATH}">Ver este expediente en mi dashboard</a>`}
-                </div>
-              </div>
-            `}
+            ${showFull ? renderUnlockedPropertyDetails() : renderPublicPropertyDetails(relatedCase, showDate)}
           </div>
           <div>
-            <div class="education-video tone-${state.propertyDetail.heroTone || "navy"}">
+            ${renderPropertyCover(state.propertyDetail, `
               <div>
                 <div class="play-badge">${state.propertyDetail.discountPct}%</div>
                 <h3>${formatMoney(state.propertyDetail.estimatedValueMxn)}</h3>
-                <p>${showCourtAndTime ? "Ya tienes visibilidad operativa para esta oportunidad." : "El siguiente paso es desbloquear visibilidad operativa y asesoría."}</p>
+                <p>${showCourt ? "Ya tienes visibilidad operativa para esta oportunidad." : "El número de juzgado se revisa dentro de la asesoría inicial."}</p>
               </div>
-            </div>
+            `, "property-cover--drawer")}
             <div class="inline-actions" style="margin-top:18px;">
               <button class="primary" data-action="interest-property" data-property-id="${state.propertyDetail.id}">${relatedCase ? "Ir a mi expediente" : "Me interesa este inmueble"}</button>
               <button class="ghost" data-action="close-property">Cerrar</button>
@@ -74,6 +45,43 @@ function renderPropertyDrawer() {
           </div>
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderUnlockedPropertyDetails() {
+  return `
+    <div class="section-card" style="margin-top:16px;">
+      <p><strong>Fecha de subasta:</strong> ${escapeHtml(formatDate(state.propertyDetail.auctionDate))}</p>
+      <p><strong>Hora de subasta:</strong> ${escapeHtml(state.propertyDetail.auctionTime || "Pendiente")}</p>
+      <p><strong>Órgano subastador:</strong> ${escapeHtml(state.propertyDetail.courtName || "Pendiente")}</p>
+      <p><strong>Postura legal:</strong> ${formatMoney(state.propertyDetail.legalBidMxn)}</p>
+      <p><strong>Dirección completa:</strong> ${escapeHtml(state.propertyDetail.fullAddress || "Pendiente")}</p>
+      <div class="notice-card">
+        <strong>Adjudicación y adeudos:</strong> la adjudicación judicial permite solicitar la cancelación de gravámenes procedentes y la entrega del inmueble, pero no necesariamente elimina adeudos de agua, predial, luz o mantenimiento.
+      </div>
+    </div>
+  `;
+}
+
+function renderPublicPropertyDetails(relatedCase, showDate) {
+  const action = !state.me
+    ? `<button class="primary" data-action="open-auth" data-mode="register">Crear cuenta</button>`
+    : relatedCase?.progress?.nextStageCode === "ADVISORY" && relatedCase.progress.canPurchaseNextStage
+      ? `<button class="primary" data-action="checkout" data-case-id="${relatedCase.id}" data-stage-code="ADVISORY">Contratar asesoría inicial</button>`
+      : relatedCase
+        ? `<a class="primary" href="${DASHBOARD_PATH}">Ver este expediente en mi dashboard</a>`
+        : "";
+
+  return `
+    <div class="section-card" style="margin-top:16px;">
+      <div class="kicker">Datos públicos del remate</div>
+      <p><strong>Fecha de subasta:</strong> ${showDate ? escapeHtml(formatDate(state.propertyDetail.auctionDate)) : "Por confirmar"}</p>
+      <p><strong>Hora de subasta:</strong> ${escapeHtml(state.propertyDetail.auctionTime || "Por confirmar")}</p>
+      <p><strong>Postura legal:</strong> ${formatMoney(state.propertyDetail.legalBidMxn)}</p>
+      <p><strong>Dirección completa:</strong> ${escapeHtml(state.propertyDetail.fullAddress || "Pendiente")}</p>
+      <p>El expediente, el número de juzgado y el detalle legal no se muestran en la ficha pública. Los revisamos contigo dentro de la asesoría inicial.</p>
+      ${action ? `<div class="inline-actions">${action}</div>` : ""}
     </div>
   `;
 }
@@ -325,7 +333,7 @@ function renderDashboard() {
     ${renderTopbar()}
       ${renderDashboardHero()}
       ${renderDashboardCases()}
-        ${renderListings("dashboard-catalog", "Inmuebles disponibles para ti", "El listado muestra avalúo, postura legal, almoneda y fecha de subasta. El órgano subastador, la hora y la dirección completa se desbloquean al contratar la asesoría inicial para un inmueble específico.")}
+        ${renderListings("dashboard-catalog", "Inmuebles disponibles para ti", "El listado muestra avalúo, postura legal, almoneda, fecha de subasta y dirección completa. El expediente y el número de juzgado se reservan fuera de la ficha pública.")}
       ${renderPrivacyNotice()}
       ${renderFooter()}
       ${renderPropertyDrawer()}

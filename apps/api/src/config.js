@@ -15,6 +15,7 @@ export const config = {
   mercadoPagoWebhookSecret: process.env.MERCADO_PAGO_WEBHOOK_SECRET || "",
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   openaiExtractionModel: process.env.OPENAI_EXTRACTION_MODEL || "gpt-4.1-mini",
+  googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
   localApiProxyUrl: localApiProxyDisabled ? "" : process.env.LOCAL_API_PROXY_URL || "",
   publicWebUrl: process.env.PUBLIC_WEB_URL || "http://localhost:3000",
   publicAdminUrl: process.env.PUBLIC_ADMIN_URL || "http://localhost:3000/admin"

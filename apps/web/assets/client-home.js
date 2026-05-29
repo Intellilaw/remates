@@ -77,7 +77,7 @@ function renderHomeHero() {
           </div>
           <div class="hero__stats">
             <div class="stat"><strong>Antes de pagar</strong><span>ves avalúo, postura legal, almoneda y fecha</span></div>
-            <div class="stat"><strong>Con asesoría</strong><span>desbloqueas órgano subastador, hora y revisión guiada</span></div>
+            <div class="stat"><strong>Con asesoría</strong><span>desbloqueas órgano subastador y revisión guiada</span></div>
             <div class="stat"><strong>Sin sorpresas</strong><span>explicamos también adeudos y costos posteriores</span></div>
           </div>
         </div>
@@ -88,7 +88,7 @@ function renderHomeHero() {
           </div>
           ${highlighted.map((property) => `
             <div class="property-card">
-              <div class="property-cover tone-${property.heroTone}">
+              ${renderPropertyCover(property, `
                 <div class="property-cover__badges">
                   <span class="badge">${escapeHtml(property.city)}</span>
                   ${renderPropertyPublicStamp(property)}
@@ -97,7 +97,7 @@ function renderHomeHero() {
                   <strong>${escapeHtml(property.title)}</strong>
                     <div>Postura legal ${formatMoney(property.legalBidMxn)}</div>
                 </div>
-              </div>
+              `)}
               <div class="property-card__body">
                 <div class="property-card__meta">
                   <span class="chip">Avalúo ${formatMoney(property.estimatedValueMxn)}</span>
@@ -114,7 +114,7 @@ function renderHomeHero() {
       </div>
       <div class="metric-strip">
         <div class="metric"><strong>${state.properties.length}</strong><span>inmuebles disponibles en CDMX</span></div>
-        <div class="metric"><strong>${formatMoney(3000)}</strong><span>asesoría inicial para desbloquear órgano y hora</span></div>
+        <div class="metric"><strong>${formatMoney(3000)}</strong><span>asesoría inicial para desbloquear órgano y revisión</span></div>
         <div class="metric"><strong>${formatMoney(70000)}</strong><span>posesión solo después de adjudicación judicial</span></div>
       </div>
     </section>
@@ -143,7 +143,7 @@ function renderExplainer() {
           </div>
           <div class="explain-point">
             <h3>2. Te asesoras</h3>
-            <p>Con ${formatMoney(3000)} se desbloquean el órgano subastador y la hora, y revisamos contigo qué significa participar en esa almoneda.</p>
+            <p>Con ${formatMoney(3000)} se desbloquea el órgano subastador y revisamos contigo qué significa participar en esa almoneda.</p>
           </div>
           <div class="explain-point">
             <h3>3. Participas acompañado</h3>
@@ -212,7 +212,7 @@ function renderEducation() {
   `;
 }
 
-function renderListings(sectionId = "listings", title = "Remates en CDMX", copy = "Consulta el avalúo, la postura legal, la almoneda y la fecha de subasta de cada inmueble. El órgano subastador, la hora y la dirección completa se liberan con la asesoría inicial, para que tengas los datos operativos antes de avanzar.") {
+function renderListings(sectionId = "listings", title = "Remates en CDMX", copy = "Consulta avalúo, postura legal, almoneda, fecha de subasta y dirección completa. El expediente y el número de juzgado se reservan fuera de la ficha pública.") {
   const items = filteredProperties();
   const boroughs = [...new Set(state.properties.map((item) => item.city))].sort((left, right) => left.localeCompare(right, "es-MX"));
 
@@ -236,7 +236,7 @@ function renderListings(sectionId = "listings", title = "Remates en CDMX", copy 
           const auctionDate = property.auctionDate ? formatDate(property.auctionDate) : "Fecha por confirmar";
           return `
             <article class="property-card">
-              <div class="property-cover tone-${property.heroTone}">
+              ${renderPropertyCover(property, `
                 <div class="property-cover__badges">
                   <span class="badge">${escapeHtml(property.city)}</span>
                   ${renderPropertyPublicStamp(property)}
@@ -245,7 +245,7 @@ function renderListings(sectionId = "listings", title = "Remates en CDMX", copy 
                   <div class="kicker">${escapeHtml(property.zoneLabel)}</div>
                   <strong>${escapeHtml(property.title)}</strong>
                 </div>
-              </div>
+              `)}
                 <div class="property-card__body">
                   <div class="property-facts">
                     <div><span>Avalúo</span><strong>${formatMoney(property.estimatedValueMxn)}</strong></div>
@@ -253,6 +253,7 @@ function renderListings(sectionId = "listings", title = "Remates en CDMX", copy 
                     <div><span>Almoneda</span><strong>${escapeHtml(auctionRoundLabel(property.auctionRound))}</strong></div>
                     <div><span>Fecha de subasta</span><strong>${escapeHtml(auctionDate)}</strong></div>
                   </div>
+                  ${property.fullAddress ? `<p class="property-address-line"><strong>Dirección:</strong> ${escapeHtml(property.fullAddress)}</p>` : ""}
                   <p>${escapeHtml(property.shortDescription)}</p>
                   <button class="primary" data-action="open-property" data-slug="${property.slug}">Ver detalle</button>
               </div>
@@ -270,7 +271,7 @@ function renderDashboardAccess() {
       <div class="section-card access-card">
         <div class="kicker">Acceso privado</div>
         <h1 class="section-title">Este dashboard es tu espacio de seguimiento.</h1>
-        <p class="section-copy">Aquí verás tus expedientes, fechas de almoneda, pagos por etapa, mensajes y, cuando corresponda, órgano subastador, hora, dirección completa y revisión legal del inmueble.</p>
+        <p class="section-copy">Aquí verás tus expedientes, fechas de almoneda, pagos por etapa, mensajes y, cuando corresponda, órgano subastador y revisión legal del inmueble.</p>
         <div class="inline-actions">
           <button class="primary" data-action="open-auth" data-mode="login">Iniciar sesión</button>
           <a class="secondary" href="/">Volver al inicio</a>

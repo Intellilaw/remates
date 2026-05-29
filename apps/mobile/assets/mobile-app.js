@@ -1,5 +1,5 @@
 const app = document.querySelector("#app");
-const STAFF_ROLES = ["CONTENT", "ADMIN", "LEGAL"];
+const STAFF_ROLES = ["SALES", "LEGAL", "FINANCE", "CONTENT", "ADMIN"];
 const tokenKey = "remates_staff_token";
 const nativeApiBaseUrl = document.querySelector('meta[name="api-base-url"]')?.content || "https://remates.legalflow.solutions";
 const isNativeShell = Boolean(window.Capacitor?.isNativePlatform?.()) || window.location.protocol === "capacitor:";

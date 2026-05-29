@@ -1,12 +1,13 @@
 import { mutateDb } from "../../data/store.js";
 import { config } from "../../config.js";
-import { getFullProperty, logAudit, requireRoles } from "../../domain/app-domain.js";
+import { STAFF_ACCESS_ROLES, getFullProperty, logAudit, requireRoles } from "../../domain/app-domain.js";
 import { computeLegalBid, extractRemateFromImage } from "../../services/remate-extraction-service.js";
+import { resolveLocationImage } from "../../services/property-location-image-service.js";
 import { badRequest, readJsonBody, sendJson } from "../../utils/http.js";
 import { nextPropertyDisplayId } from "../../utils/property-display-id.js";
 import { randomId, sanitizeText } from "../../utils/security.js";
 
-const REMATE_CAPTURE_ROLES = ["CONTENT", "ADMIN", "LEGAL"];
+const REMATE_CAPTURE_ROLES = STAFF_ACCESS_ROLES;
 
 export async function handleMobileRemateRoutes(req, res, pathname, { db, actor }) {
   if (pathname === "/api/mobile/remates/extract" && req.method === "POST") {
@@ -37,6 +38,7 @@ export async function handleMobileRemateRoutes(req, res, pathname, { db, actor }
       const input = body.item || body;
       const updated = await mutateDb(async (draft) => {
         const property = buildPropertyFromInput(input, draft);
+        property.locationImage = await resolveLocationImage(property);
         draft.properties.unshift(property);
         logAudit(draft, actor, "MOBILE_REMATE_PUBLISHED", "property", property.id, property);
         return draft;
@@ -80,7 +82,8 @@ function buildDraftFromExtraction(extraction, db) {
     featured: true,
     tags: ["Remate"],
     heroTone: "cobalt",
-    imageAccent: "#2563eb"
+    imageAccent: "#2563eb",
+    locationImage: null
   };
 }
 
@@ -135,6 +138,7 @@ function buildPropertyFromInput(input, db) {
     tags: Array.isArray(input.tags) ? input.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Remate"],
     heroTone: input.heroTone || "cobalt",
     imageAccent: input.imageAccent || "#2563eb",
+    locationImage: null,
     publishedAt: new Date().toISOString()
   };
 }

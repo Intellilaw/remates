@@ -97,6 +97,7 @@ model Property {
   tags              String[] @default([])
   heroTone          String   @default("navy") @map("hero_tone")
   imageAccent       String   @default("#1d4ed8") @map("image_accent")
+  locationImage     Json?    @map("location_image_json")
   publishedAt       DateTime? @map("published_at") @db.Timestamptz(6)
 
   privateDetails    PropertyPrivateDetail?

@@ -551,10 +551,6 @@ function renderProperties() {
                 <span>Tags</span>
                 <input name="tags" />
               </label>
-              <label class="check-row">
-                <input name="featured" type="checkbox" />
-                <span>Destacado</span>
-              </label>
             </div>
             <button class="primary" type="submit">Publicar inmueble</button>
           </form>

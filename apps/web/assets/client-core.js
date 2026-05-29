@@ -3,7 +3,7 @@ const STAGES = [
     code: "ADVISORY",
     title: "1. Asesoría personalizada",
     amountMxn: 3000,
-    summary: "Antes de invertir más, desbloqueas el órgano subastador y la hora de la almoneda, y recibes una asesoría personalizada para entender el expediente, la postura legal y los siguientes pasos.",
+    summary: "Antes de invertir más, desbloqueas el órgano subastador y la revisión guiada, y recibes una asesoría personalizada para entender el expediente, la postura legal y los siguientes pasos.",
     details: [
       "Ves datos operativos que no aparecen en la ficha pública.",
       "Resolvemos tus dudas sobre la subasta, la postura y el proceso.",
@@ -182,6 +182,37 @@ function propertyPublicStampClass(property) {
 function renderPropertyPublicStamp(property) {
   const label = propertyPublicStamp(property);
   return label ? `<span class="property-public-stamp${propertyPublicStampClass(property)}">${escapeHtml(label)}</span>` : "";
+}
+
+function renderPropertyCover(property, bodyHtml, extraClass = "") {
+  const image = property?.locationImage || null;
+  const imageUrl = image?.imageUrl || "";
+  const imageClass = imageUrl ? " property-cover--image" : "";
+  const className = `property-cover tone-${property?.heroTone || "cobalt"}${imageClass}${extraClass ? ` ${extraClass}` : ""}`;
+  const alt = image?.sourceLabel
+    ? `${image.sourceLabel} de referencia para ${property?.title || "inmueble en remate"}`
+    : `Imagen de referencia para ${property?.title || "inmueble en remate"}`;
+
+  return `
+    <div class="${className}">
+      ${imageUrl ? `<img class="property-cover__image" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" />` : ""}
+      ${imageUrl ? `<div class="property-cover__shade"></div>` : ""}
+      <div class="property-cover__content">${bodyHtml}</div>
+      ${renderLocationImageDisclaimer(image)}
+    </div>
+  `;
+}
+
+function renderLocationImageDisclaimer(image) {
+  if (!image?.imageUrl) {
+    return "";
+  }
+  const isFallback = image.provider === "LOCAL_FALLBACK";
+  const source = !isFallback && image.sourceLabel ? ` Fuente: ${image.sourceLabel}.` : "";
+  const disclaimer = isFallback
+    ? "Imagen de referencia; puede no corresponder exactamente al inmueble."
+    : image.disclaimer || "Imagen obtenida de Google. Puede no corresponder de manera exacta al inmueble rematado.";
+  return `<p class="property-image-disclaimer">${escapeHtml(disclaimer + source)}</p>`;
 }
 
 function paymentStatusLabel(status) {

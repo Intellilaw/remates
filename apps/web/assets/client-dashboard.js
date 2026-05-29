@@ -77,14 +77,19 @@ function renderClientEntitlements(caseItem) {
           <p>Visible desde la ficha pública del inmueble.</p>
         </div>
         <div class="detail-card">
+          <div class="kicker">Dirección completa</div>
+          <strong>${escapeHtml(property.fullAddress || "Pendiente")}</strong>
+          <p>Visible desde la ficha pública del inmueble.</p>
+        </div>
+        <div class="detail-card">
           <div class="kicker">Órgano subastador</div>
           <strong>${property.courtName ? escapeHtml(property.courtName) : "Bloqueado"}</strong>
           <p>${property.courtName ? "Ya sabes qué órgano llevará a cabo la subasta." : `Se desbloquea con la asesoría inicial de ${formatMoney(3000)}.`}</p>
         </div>
         <div class="detail-card">
           <div class="kicker">Hora de subasta</div>
-          <strong>${property.auctionTime ? escapeHtml(property.auctionTime) : "Bloqueada"}</strong>
-          <p>${property.auctionTime ? "Ya sabes a qué hora se celebra la almoneda." : `Se desbloquea con la asesoría inicial de ${formatMoney(3000)}.`}</p>
+          <strong>${property.auctionTime ? escapeHtml(property.auctionTime) : "Pendiente"}</strong>
+          <p>Visible desde la ficha pública cuando viene indicada en el remate.</p>
       </div>
         <div class="detail-card">
           <div class="kicker">Postura legal</div>
@@ -133,15 +138,16 @@ function renderCaseDetail(caseItem) {
         ${caseItem.property.visibility?.showFullDetails ? `
             <div class="detail-grid detail-grid--legal">
             <div class="detail-card detail-card--wide">
-              <div class="kicker">Dirección completa</div>
-              <strong>${escapeHtml(caseItem.property.fullAddress || "Pendiente")}</strong>
+              <div class="kicker">Detalle legal</div>
+              <strong>${escapeHtml(caseItem.property.legalSummary || "Revisión legal disponible")}</strong>
+              <p>${escapeHtml(caseItem.property.riskNotes || "Revisamos expediente, adeudos y estatus de posesión antes de recomendar participación.")}</p>
             </div>
           </div>
         ` : `
           <div class="detail-gate">
             <div class="kicker">Información ampliada</div>
             <h3>Tu siguiente desbloqueo abre la información operativa crítica.</h3>
-            <p>Después del pago de asesoría podrás ver órgano subastador, hora y dirección completa. La idea es que tengas los datos operativos antes de decidir si avanzas.</p>
+            <p>Después del pago de asesoría podrás ver órgano subastador y revisión legal del inmueble. La idea es que tengas los datos operativos antes de decidir si avanzas.</p>
           </div>
         `}
       </div>

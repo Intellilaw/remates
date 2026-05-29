@@ -6,7 +6,7 @@ const serviceStages = [
     name: "Asesoría personalizada",
     sortOrder: 1,
     priceMxn: 3000,
-    description: "Desbloquea órgano subastador y hora de la almoneda, además de una asesoría personalizada para entender el expediente, la postura legal, los posibles costos posteriores y los siguientes pasos."
+    description: "Desbloquea órgano subastador y revisión guiada, además de una asesoría personalizada para entender el expediente, la postura legal, los posibles costos posteriores y los siguientes pasos."
   },
   {
     code: "REPRESENTATION",

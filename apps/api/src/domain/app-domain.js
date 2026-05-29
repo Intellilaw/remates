@@ -1,5 +1,6 @@
 import { config } from "../config.js";
 import { exposeUser, hasAnyRole, isStaff } from "../services/auth-service.js";
+import { buildFallbackLocationImage } from "../services/property-location-image-service.js";
 import { forbidden, unauthorized } from "../utils/http.js";
 import { randomId, verifySignedToken } from "../utils/security.js";
 
@@ -59,6 +60,7 @@ export function getBaseProperty(property) {
     tags: property.tags,
     heroTone: property.heroTone,
     imageAccent: property.imageAccent,
+    locationImage: exposeLocationImage(property.locationImage || buildFallbackLocationImage(property)),
     publishedAt: property.publishedAt
   };
 }
@@ -124,6 +126,8 @@ export function propertyAccessForActor(db, property, actor, caseRecord = null) {
   if (!actor) {
     return {
       showAuctionDate: true,
+      showAuctionTime: true,
+      showFullAddress: true,
       showCourtAndTime: false,
       showFullDetails: false
     };
@@ -132,6 +136,8 @@ export function propertyAccessForActor(db, property, actor, caseRecord = null) {
   if (isStaff(actor)) {
     return {
       showAuctionDate: true,
+      showAuctionTime: true,
+      showFullAddress: true,
       showCourtAndTime: true,
       showFullDetails: true
     };
@@ -142,6 +148,8 @@ export function propertyAccessForActor(db, property, actor, caseRecord = null) {
 
   return {
     showAuctionDate: true,
+    showAuctionTime: true,
+    showFullAddress: true,
     showCourtAndTime: Boolean(progress?.canSeeCourtAndTime),
     showFullDetails: Boolean(progress?.canSeeCourtAndTime)
   };
@@ -157,11 +165,17 @@ export function propertySnapshot(db, property, actor, caseRecord = null) {
 
   if (access.showCourtAndTime) {
     snapshot.courtName = property.courtName;
+  }
+
+  if (access.showAuctionTime) {
     snapshot.auctionTime = property.auctionTime;
   }
 
-  if (access.showFullDetails) {
+  if (access.showFullAddress) {
     snapshot.fullAddress = property.fullAddress;
+  }
+
+  if (access.showFullDetails) {
     snapshot.occupancyStatus = property.occupancyStatus;
     snapshot.legalSummary = property.legalSummary;
     snapshot.riskNotes = property.riskNotes;
@@ -256,4 +270,37 @@ export function logAudit(db, actor, action, entityType, entityId, after, before 
     after,
     createdAt: new Date().toISOString()
   });
+}
+
+function exposeLocationImage(locationImage) {
+  if (!locationImage) {
+    return null;
+  }
+
+  const {
+    endpoint,
+    params,
+    ...safeImage
+  } = locationImage;
+  const imageUrl = safeImage.imageUrl || buildGoogleImageUrl(endpoint, params);
+
+  return {
+    ...safeImage,
+    imageUrl
+  };
+}
+
+function buildGoogleImageUrl(endpoint, params) {
+  if (!endpoint || !params || !config.googleMapsApiKey) {
+    return "";
+  }
+
+  const url = new URL(endpoint);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+  url.searchParams.set("key", config.googleMapsApiKey);
+  return url.toString();
 }

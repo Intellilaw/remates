@@ -56,6 +56,7 @@ function mapProperty(property) {
     tags: property.tags || [],
     heroTone: property.heroTone,
     imageAccent: property.imageAccent,
+    locationImage: property.locationImage || null,
     publishedAt: toIso(property.publishedAt),
     fullAddress: details?.fullAddress || "",
     courtName: details?.courtName || "",
@@ -308,7 +309,7 @@ export async function writePrismaState(prisma, data) {
       }))
     });
     await tx.property.createMany({
-      data: data.properties.map((property) => ({
+      data: data.properties.map((property) => compact({
         id: property.id,
         displayId: property.displayId,
         slug: property.slug,
@@ -326,6 +327,7 @@ export async function writePrismaState(prisma, data) {
         tags: property.tags || [],
         heroTone: property.heroTone || "navy",
         imageAccent: property.imageAccent || "#1d4ed8",
+        locationImage: property.locationImage || undefined,
         publishedAt: property.publishedAt ? new Date(property.publishedAt) : null
       }))
     });
