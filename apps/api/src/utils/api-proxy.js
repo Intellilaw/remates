@@ -51,7 +51,7 @@ export async function proxyApiRequest(req, res, upstreamBaseUrl) {
         try {
           const payload = JSON.parse(Buffer.concat(chunks).toString("utf8"));
           const normalizedPayload = normalizeTextTree(payload);
-          const overrideResult = await applyLocalProxyOverrides(req.url, normalizedPayload, proxyRes.statusCode || 502, req.method);
+          const overrideResult = await applyLocalProxyOverrides(req.url, normalizedPayload, proxyRes.statusCode || 502, req.method, req);
           res.writeHead(overrideResult.statusCode, {
             ...responseHeaders,
             "Content-Type": "application/json; charset=utf-8",
@@ -159,7 +159,7 @@ async function readOverrides() {
   try {
     return JSON.parse(await fs.readFile(overrideFilePath, "utf8"));
   } catch {
-    return { hiddenPropertyIds: [], cachedAdminProperties: [] };
+    return { hiddenPropertyIds: [], cachedAdminProperties: [], localCases: [] };
   }
 }
 
@@ -182,7 +182,7 @@ async function forgetHiddenProperty(propertyId) {
   }
 }
 
-async function applyLocalProxyOverrides(requestUrl, payload, statusCode = 200, requestMethod = "GET") {
+async function applyLocalProxyOverrides(requestUrl, payload, statusCode = 200, requestMethod = "GET", req = null) {
   if (!payload || typeof payload !== "object") {
     return { statusCode, payload };
   }
@@ -190,7 +190,35 @@ async function applyLocalProxyOverrides(requestUrl, payload, statusCode = 200, r
   const pathname = new URL(requestUrl, "http://localhost").pathname;
   const overrides = await readOverrides();
   const hiddenPropertyIds = new Set(overrides.hiddenPropertyIds || []);
+  const userKey = localProxyUserKey(req);
   let nextPayload = payload;
+
+  if (pathname === "/api/cases" && requestMethod === "POST" && statusCode < 400 && nextPayload.item?.id && userKey) {
+    const localCases = upsertLocalCase(overrides.localCases || [], userKey, nextPayload.item);
+    await writeOverrides({
+      ...overrides,
+      localCases
+    });
+    return { statusCode, payload: nextPayload };
+  }
+
+  if (pathname === "/api/me/cases" && requestMethod === "GET" && Array.isArray(nextPayload.items) && userKey) {
+    const localCases = (overrides.localCases || [])
+      .filter((entry) => entry.userKey === userKey)
+      .map((entry) => entry.item)
+      .filter((item) => item?.property?.id && !hiddenPropertyIds.has(item.property.id));
+    if (localCases.length) {
+      const seenIds = new Set(nextPayload.items.map((item) => item.id));
+      const seenPropertyIds = new Set(nextPayload.items.map((item) => item.property?.id).filter(Boolean));
+      nextPayload = {
+        ...nextPayload,
+        items: [
+          ...nextPayload.items,
+          ...localCases.filter((item) => !seenIds.has(item.id) && !seenPropertyIds.has(item.property?.id))
+        ]
+      };
+    }
+  }
 
   if ((pathname === "/api/admin/properties" || pathname === "/api/properties") && Array.isArray(nextPayload.items)) {
     nextPayload = {
@@ -274,6 +302,44 @@ async function applyLocalProxyOverrides(requestUrl, payload, statusCode = 200, r
   }
 
   return { statusCode, payload: nextPayload };
+}
+
+function localProxyUserKey(req) {
+  const header = req?.headers?.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const [payload] = token.split(".");
+  if (!payload) {
+    return "";
+  }
+
+  try {
+    const json = Buffer.from(payload.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+    return JSON.parse(json).sub || "";
+  } catch {
+    return "";
+  }
+}
+
+function upsertLocalCase(localCases, userKey, caseItem) {
+  const item = {
+    ...caseItem,
+    conversationId: null
+  };
+  const filtered = localCases.filter((entry) => (
+    entry.userKey !== userKey ||
+    (
+      entry.item?.id !== item.id &&
+      entry.item?.property?.id !== item.property?.id
+    )
+  ));
+  return [
+    ...filtered,
+    {
+      userKey,
+      item,
+      savedAt: new Date().toISOString()
+    }
+  ];
 }
 
 function upsertCachedAdminProperty(properties, updatedProperty) {

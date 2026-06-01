@@ -60,7 +60,7 @@ export function getBaseProperty(property) {
     tags: property.tags,
     heroTone: property.heroTone,
     imageAccent: property.imageAccent,
-    locationImage: exposeLocationImage(property.locationImage || buildFallbackLocationImage(property)),
+    locationImage: exposeLocationImage(property.locationImage || buildFallbackLocationImage(property), property),
     publishedAt: property.publishedAt
   };
 }
@@ -272,7 +272,7 @@ export function logAudit(db, actor, action, entityType, entityId, after, before 
   });
 }
 
-function exposeLocationImage(locationImage) {
+function exposeLocationImage(locationImage, property) {
   if (!locationImage) {
     return null;
   }
@@ -282,7 +282,7 @@ function exposeLocationImage(locationImage) {
     params,
     ...safeImage
   } = locationImage;
-  const imageUrl = safeImage.imageUrl || buildGoogleImageUrl(endpoint, params);
+  const imageUrl = safeImage.imageUrl || buildLocationImageProxyUrl(property, locationImage);
 
   return {
     ...safeImage,
@@ -290,17 +290,12 @@ function exposeLocationImage(locationImage) {
   };
 }
 
-function buildGoogleImageUrl(endpoint, params) {
-  if (!endpoint || !params || !config.googleMapsApiKey) {
+function buildLocationImageProxyUrl(property, locationImage) {
+  if (!property?.slug || !locationImage?.endpoint || !locationImage?.params) {
     return "";
   }
 
-  const url = new URL(endpoint);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  });
-  url.searchParams.set("key", config.googleMapsApiKey);
-  return url.toString();
+  const baseUrl = config.publicWebUrl.replace(/\/$/, "");
+  const version = encodeURIComponent(locationImage.generatedAt || property.publishedAt || property.id);
+  return `${baseUrl}/api/properties/${encodeURIComponent(property.slug)}/location-image?v=${version}`;
 }

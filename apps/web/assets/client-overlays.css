@@ -51,6 +51,34 @@
   background: rgba(219, 234, 254, 0.6);
 }
 
+.icon-button {
+  width: 46px;
+  height: 46px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 999px;
+  color: var(--blue-900);
+  background: linear-gradient(135deg, var(--blue-100), #f8fbff);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.icon-button:hover {
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue-900), var(--blue-700));
+}
+
+.icon-button svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .progress {
   height: 10px;
   border-radius: 999px;

@@ -2,7 +2,8 @@ window.rematesCliente = {
   openAuth,
   closeAuth,
   switchAuth,
-  toggleAuthPassword
+  toggleAuthPassword,
+  socialLogin: handleSocialLogin
 };
 
 document.addEventListener("click", async (event) => {
@@ -46,6 +47,14 @@ document.addEventListener("click", async (event) => {
       render();
     }
 
+    if (action === "share-property") {
+      await shareProperty();
+    }
+
+    if (action === "copy-property-link") {
+      await copyPropertyLink();
+    }
+
     if (action === "scroll") {
       document.querySelector(target.dataset.target)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -53,6 +62,7 @@ document.addEventListener("click", async (event) => {
     if (action === "interest-property") {
       const propertyId = target.dataset.propertyId;
       if (!state.me) {
+        state.pendingInterestPropertyId = propertyId;
         openAuth("register");
         return;
       }
@@ -93,24 +103,48 @@ document.addEventListener("click", async (event) => {
     }
 
     if (action === "social-login") {
-      const payload = await api("/api/auth/social-demo", {
-        method: "POST",
-        body: JSON.stringify({ provider: target.dataset.provider })
-      });
-      state.token = payload.token;
-      localStorage.setItem("remates_client_token", payload.token);
-      state.authOpen = false;
-      await loadSession();
-      await ensureConversationPolling();
-      setToast(`Sesión iniciada con ${target.dataset.provider}.`);
-      if (!isDashboardRoute) {
-        goToDashboard();
-      }
+      await handleSocialLogin(target.dataset.provider);
+      return;
     }
   } catch (error) {
     setToast(error.message);
   }
 });
+
+async function handleSocialLogin(providerValue) {
+  const provider = String(providerValue || "").trim().toLowerCase();
+  const providerUrl = state.providers?.providers?.[provider];
+  if (providerUrl) {
+    window.location.assign(providerUrl);
+    return;
+  }
+
+  if (state.providers && !state.providers.demoFallback) {
+    throw new Error("Este proveedor de acceso no está configurado.");
+  }
+
+  const payload = await api("/api/auth/social-demo", {
+    method: "POST",
+    body: JSON.stringify({ provider })
+  });
+  state.token = payload.token;
+  localStorage.setItem("remates_client_token", payload.token);
+  state.authOpen = false;
+  const pendingPropertyId = state.pendingInterestPropertyId;
+  state.pendingInterestPropertyId = "";
+  if (pendingPropertyId) {
+    await createCase(pendingPropertyId);
+    return;
+  }
+  await loadSession();
+  await ensureConversationPolling();
+  setToast(`Sesión iniciada con ${provider === "facebook" ? "Facebook" : "Google"}.`);
+  if (!isDashboardRoute) {
+    goToDashboard();
+  } else {
+    render();
+  }
+}
 
 document.addEventListener("submit", async (event) => {
   const form = event.target;
@@ -143,6 +177,12 @@ document.addEventListener("submit", async (event) => {
       state.token = payload.token;
       localStorage.setItem("remates_client_token", payload.token);
       state.authOpen = false;
+      const pendingPropertyId = state.pendingInterestPropertyId;
+      state.pendingInterestPropertyId = "";
+      if (pendingPropertyId) {
+        await createCase(pendingPropertyId);
+        return;
+      }
       await loadSession();
       await ensureConversationPolling();
       setToast("Sesión iniciada.");
@@ -168,6 +208,12 @@ document.addEventListener("submit", async (event) => {
       state.token = payload.token;
       localStorage.setItem("remates_client_token", payload.token);
       state.authOpen = false;
+      const pendingPropertyId = state.pendingInterestPropertyId;
+      state.pendingInterestPropertyId = "";
+      if (pendingPropertyId) {
+        await createCase(pendingPropertyId);
+        return;
+      }
       await loadSession();
       setToast("Cuenta creada correctamente.");
       if (!isDashboardRoute) {

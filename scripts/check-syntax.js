@@ -13,6 +13,11 @@ const syncedAssetRoots = [
   path.join("apps", "mobile", "assets"),
   path.join("android", "app", "src", "main", "assets", "public", "assets")
 ];
+const webShellFiles = [
+  path.join("apps", "web", "index.html"),
+  path.join("apps", "web", "dashboard.html"),
+  path.join("apps", "admin", "index.html")
+];
 
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -60,6 +65,21 @@ for (const assetName of sharedAssets) {
       );
       process.exit(1);
     }
+  }
+}
+
+for (const shellFile of webShellFiles) {
+  const shellPath = path.join(root, shellFile);
+  const shell = fs.readFileSync(shellPath, "utf8");
+
+  if (shell.includes("app-version.js?v=")) {
+    process.stderr.write(`${shellFile} must load app-version.js without a version query string.\n`);
+    process.exit(1);
+  }
+
+  if (!shell.includes('src="/assets/app-version.js"')) {
+    process.stderr.write(`${shellFile} must load the shared /assets/app-version.js file.\n`);
+    process.exit(1);
   }
 }
 

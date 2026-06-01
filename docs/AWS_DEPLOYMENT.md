@@ -21,6 +21,7 @@ Target domain: `remates.legalflow.solutions`
 2. Authenticate AWS CLI with the target AWS account.
 3. Copy `infra/terraform/terraform.tfvars.example` to `infra/terraform/terraform.tfvars` and fill secrets.
    - Set `openai_api_key` so the mobile capture app can extract remate data from photos.
+   - Set `google_maps_api_key` so published remates can use Google Street View / Static Maps before falling back to the local reference image.
    - Keep `openai_extraction_model = "gpt-4.1-mini"` unless you intentionally test another vision-capable Responses API model.
 4. Run the first Terraform apply with `service_desired_count = 0`.
 

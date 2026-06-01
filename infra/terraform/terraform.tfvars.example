@@ -16,4 +16,5 @@ mercado_pago_access_token = ""
 mercado_pago_webhook_secret = ""
 
 openai_api_key = ""
+google_maps_api_key = ""
 openai_extraction_model = "gpt-4.1-mini"

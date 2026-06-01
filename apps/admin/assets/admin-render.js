@@ -384,20 +384,6 @@ function renderPropertyEditForm(property) {
         </label>
         <div class="two-col">
           <label class="field-label">
-            <span>Estado</span>
-            <input name="state" value="${escapeHtml(property.state)}" required />
-          </label>
-          <label class="field-label">
-            <span>Ciudad o alcaldía</span>
-            <input name="city" value="${escapeHtml(property.city)}" required />
-          </label>
-        </div>
-        <label class="field-label">
-          <span>Colonia</span>
-          <input name="zoneLabel" value="${escapeHtml(property.zoneLabel || "")}" required />
-        </label>
-        <div class="two-col">
-          <label class="field-label">
             <span>Valor de avalúo</span>
             ${renderCurrencyInput("estimatedValueMxn", Number(property.estimatedValueMxn || 0))}
           </label>
@@ -519,20 +505,6 @@ function renderProperties() {
               </label>
               <div class="two-col">
                 <label class="field-label">
-                  <span>Estado</span>
-                  <input name="state" required />
-                </label>
-                <label class="field-label">
-                  <span>Ciudad o alcaldía</span>
-                  <input name="city" required />
-                </label>
-              </div>
-              <label class="field-label">
-                <span>Colonia</span>
-                <input name="zoneLabel" required />
-              </label>
-              <div class="two-col">
-                <label class="field-label">
                   <span>Descuento %</span>
                   <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" required />
                 </label>
@@ -546,10 +518,6 @@ function renderProperties() {
               <label class="field-label">
                 <span>Descripción</span>
                 <textarea name="shortDescription" rows="3" required></textarea>
-              </label>
-              <label class="field-label">
-                <span>Tags</span>
-                <input name="tags" />
               </label>
             </div>
             <button class="primary" type="submit">Publicar inmueble</button>

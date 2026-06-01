@@ -42,7 +42,7 @@ const STAGE_LABELS = {
 };
 
 const STATUS_LABELS = {
-  NEW: "Expediente nuevo",
+  NEW: "Inmueble nuevo",
   ACTIVE: "En proceso",
   ON_HOLD: "En pausa",
   AWARDED: "Adjudicado",
@@ -101,7 +101,8 @@ const state = {
     borough: "all"
   },
   checkoutPayment: null,
-  pollingHandle: null
+  pollingHandle: null,
+  pendingInterestPropertyId: ""
 };
 
 const app = document.querySelector("#app");
@@ -157,6 +158,31 @@ function auctionRoundLabel(value) {
     POSTERIOR: "Posterior almoneda"
   };
   return labels[value] || "Almoneda por confirmar";
+}
+
+function discountPctValue(property) {
+  const explicitDiscount = Number(property?.discountPct);
+  if (Number.isFinite(explicitDiscount) && explicitDiscount > 0) {
+    return Math.round(explicitDiscount);
+  }
+
+  const estimatedValue = Number(property?.estimatedValueMxn || 0);
+  const legalBid = Number(property?.legalBidMxn || 0);
+  if (estimatedValue > 0 && legalBid > 0 && legalBid < estimatedValue) {
+    return Math.round(((estimatedValue - legalBid) / estimatedValue) * 100);
+  }
+
+  return 0;
+}
+
+function discountLabel(property) {
+  const discountPct = discountPctValue(property);
+  return discountPct > 0 ? `${discountPct}% por debajo del avalúo` : "Sin descuento estimado";
+}
+
+function discountShortLabel(property) {
+  const discountPct = discountPctValue(property);
+  return discountPct > 0 ? `${discountPct}% bajo avalúo` : "Sin descuento";
 }
 
 function normalizePublicPropertyStatus(status) {
@@ -229,6 +255,67 @@ function setToast(message) {
   }, 2800);
 }
 
+function propertyShareUrl(property = state.propertyDetail) {
+  const slug = String(property?.slug || "").trim();
+  return slug ? new URL(`/property/${encodeURIComponent(slug)}`, window.location.origin).href : window.location.href;
+}
+
+function propertySharePayload(property = state.propertyDetail) {
+  const title = property?.title || "Inmueble en remate";
+  const url = propertyShareUrl(property);
+  return {
+    title,
+    text: `${title} - Postura legal ${formatMoney(property?.legalBidMxn)}. Ver detalle: ${url}`,
+    url
+  };
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Some in-app browsers expose Clipboard API but deny write permission.
+    }
+  }
+
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.left = "-9999px";
+  document.body.append(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) {
+    throw new Error("No fue posible copiar el enlace.");
+  }
+}
+
+async function copyPropertyLink(property = state.propertyDetail) {
+  await copyTextToClipboard(propertyShareUrl(property));
+  setToast("Enlace del inmueble copiado.");
+}
+
+async function shareProperty(property = state.propertyDetail) {
+  const payload = propertySharePayload(property);
+  if (navigator.share) {
+    try {
+      await navigator.share(payload);
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+    }
+  }
+
+  await copyTextToClipboard(payload.url);
+  setToast("Enlace copiado para compartir.");
+}
+
 function getEventElementTarget(event) {
   return event.target instanceof Element ? event.target : event.target?.parentElement || null;
 }
@@ -283,6 +370,7 @@ function closeAuth() {
   state.authOpen = false;
   state.authPasswordVisible = false;
   state.passwordResetUrl = "";
+  state.pendingInterestPropertyId = "";
   render();
 }
 
@@ -444,6 +532,7 @@ function logout(shouldRender = true) {
   state.me = null;
   state.cases = [];
   state.messages = [];
+  state.pendingInterestPropertyId = "";
   setSelectedCase(null);
   localStorage.removeItem("remates_client_token");
   stopPolling();
@@ -474,8 +563,11 @@ async function createCase(propertyId) {
     })
   });
   await loadSession();
+  if (payload.item && !state.cases.some((caseItem) => caseItem.id === payload.item.id || caseItem.property?.id === payload.item.property?.id)) {
+    state.cases = [...state.cases, payload.item];
+  }
   setSelectedCase(payload.item.id);
-  setToast(payload.existing ? "Ese expediente ya estaba abierto en tu cuenta." : "Expediente creado. Ya puedes avanzar por etapas desde tu dashboard.");
+  setToast(payload.existing ? "Ese inmueble ya estaba guardado en tu cuenta." : "Inmueble guardado. Ya puedes avanzar por etapas desde tu dashboard.");
   if (!isDashboardRoute) {
     goToDashboard();
   } else {
@@ -505,7 +597,7 @@ async function confirmCheckout(paymentId) {
   });
   state.checkoutPayment = null;
   await loadSession();
-  setToast("Pago confirmado. Tu expediente avanzó a la siguiente etapa.");
+  setToast("Pago confirmado. Tu inmueble avanzó a la siguiente etapa.");
 }
 
 async function sendMessage(body) {

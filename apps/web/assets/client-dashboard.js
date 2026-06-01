@@ -1,6 +1,6 @@
 function renderDashboardHero() {
-  const activeCase = getSelectedCase();
   const greeting = state.me ? `${welcomeLabel(state.me)}, ${escapeHtml(state.me.fullName)}.` : "Tu dashboard.";
+  const contractedCount = state.cases.filter((caseItem) => hasContractedStage(caseItem)).length;
 
   return `
     <section class="section shell dashboard-shell">
@@ -13,19 +13,48 @@ function renderDashboardHero() {
         <div class="dashboard-hero__stats">
           <div class="stat">
             <strong>${state.cases.length}</strong>
-            <span>expedientes abiertos en tu cuenta</span>
+            <span>inmuebles guardados en tu cuenta</span>
           </div>
           <div class="stat">
-            <strong>${activeCase?.progress?.approvedCount || 0}/3</strong>
-            <span>etapas contratadas en el expediente activo</span>
-          </div>
-          <div class="stat">
-            <strong>${escapeHtml(STATUS_LABELS[activeCase?.status] || "Listo para empezar")}</strong>
-            <span>estado actual del expediente seleccionado</span>
+            <strong>${contractedCount}</strong>
+            <span>inmuebles con alguna etapa contratada</span>
           </div>
         </div>
       </div>
     </section>
+  `;
+}
+
+function hasContractedStage(caseItem) {
+  return Number(caseItem?.progress?.approvedCount || 0) > 0;
+}
+
+function pendingPaymentCount(caseItem) {
+  return (caseItem?.payments || []).filter((payment) => payment.status === "PENDING").length;
+}
+
+function renderMyPropertyItem(caseItem, activeCase) {
+  const approvedCount = Number(caseItem?.progress?.approvedCount || 0);
+  const pendingCount = pendingPaymentCount(caseItem);
+  const contractedLabel = approvedCount === 1 ? "1 etapa contratada" : `${approvedCount} etapas contratadas`;
+
+  return `
+    <button class="case-item my-property-item ${activeCase?.id === caseItem.id ? "active" : ""}" data-action="select-case" data-case-id="${caseItem.id}">
+      <div class="my-property-item__head">
+        <div class="kicker">${escapeHtml(STATUS_LABELS[caseItem.status] || caseItem.status)}</div>
+        <div class="property-card__meta">
+          <span class="chip">Me interesa</span>
+          ${approvedCount ? `<span class="chip chip--success">${escapeHtml(contractedLabel)}</span>` : ""}
+          ${pendingCount ? `<span class="chip">${pendingCount === 1 ? "Pago en proceso" : `${pendingCount} pagos en proceso`}</span>` : ""}
+        </div>
+      </div>
+      <strong>${escapeHtml(caseItem.property.title)}</strong>
+      <p>${escapeHtml(caseItem.property.city)} · ${escapeHtml(caseItem.property.zoneLabel || "")}</p>
+      <div class="progress"><span style="width:${Math.max(12, (approvedCount / 3) * 100)}%"></span></div>
+      <div class="small">Siguiente paso: ${caseItem.progress.nextStageCode
+        ? escapeHtml(STAGE_LABELS[caseItem.progress.nextStageCode] || caseItem.progress.nextStageCode)
+        : "Proceso completo"}</div>
+    </button>
   `;
 }
 
@@ -104,7 +133,7 @@ function renderCaseDetail(caseItem) {
   if (!caseItem) {
     return `
       <div class="dashboard-card">
-        <div class="empty">Abre tu primer expediente desde el catálogo para comenzar el proceso.</div>
+        <div class="empty">Marca tu primer inmueble con “Me interesa” desde el catálogo para comenzar el proceso.</div>
       </div>
     `;
   }
@@ -113,7 +142,7 @@ function renderCaseDetail(caseItem) {
     <div class="dashboard-card dashboard-detail">
       <div class="dashboard-detail__header">
         <div>
-          <div class="kicker">Expediente seleccionado</div>
+          <div class="kicker">Inmueble seleccionado</div>
           <h2>${escapeHtml(caseItem.property.title)}</h2>
           <p>${escapeHtml(caseItem.property.city)} · ${escapeHtml(caseItem.property.zoneLabel || "")}</p>
         </div>
@@ -162,7 +191,7 @@ function renderCaseDetail(caseItem) {
           ? caseItem.progress.canPurchaseNextStage
             ? `Tu siguiente etapa disponible es ${escapeHtml(STAGE_LABELS[caseItem.progress.nextStageCode] || caseItem.progress.nextStageCode)}.`
             : escapeHtml(caseItem.progress.nextStageReason || "Aún no hay una siguiente etapa disponible.")
-          : "Tu expediente ya recorrió todas las etapas disponibles en la plataforma."}</p>
+          : "Este inmueble ya recorrió todas las etapas disponibles en la plataforma."}</p>
       </div>
 
       <div class="case-grid">
@@ -175,7 +204,7 @@ function renderCaseDetail(caseItem) {
                   <div>${formatMoney(payment.amountMxn)} · ${escapeHtml(paymentStatusLabel(payment.status))}</div>
                   <div class="small">${payment.paidAt ? `Pagado ${formatDate(payment.paidAt)}` : "Pendiente de confirmación"}</div>
                 </div>
-            `).join("") : `<div class="empty">Aún no tienes pagos registrados en este expediente.</div>`}
+            `).join("") : `<div class="empty">Aún no tienes pagos registrados para este inmueble.</div>`}
           </div>
         </div>
         <div>
@@ -187,10 +216,10 @@ function renderCaseDetail(caseItem) {
                 <p>${escapeHtml(message.body)}</p>
                 <div class="small">${formatDate(message.createdAt)}</div>
               </div>
-            `).join("") : `<div class="empty">Todavía no hay mensajes para este expediente.</div>`}
+            `).join("") : `<div class="empty">Todavía no hay mensajes para este inmueble.</div>`}
           </div>
           <form class="form-grid" data-form="message">
-            <textarea name="body" placeholder="Escribe una pregunta sobre este expediente"></textarea>
+            <textarea name="body" placeholder="Escribe una pregunta sobre este inmueble"></textarea>
             <button class="primary" type="submit">Enviar mensaje</button>
           </form>
         </div>
@@ -206,24 +235,16 @@ function renderDashboardCases() {
     <section class="section shell" id="dashboard-cases">
       <div class="section-head">
         <div>
-          <div class="kicker">Tus expedientes</div>
-            <h2 class="section-title">Cada inmueble avanza por su propio proceso</h2>
-            <p class="section-copy">Cada expediente muestra qué ya sabes, qué falta por desbloquear, qué pago sigue y qué implicaciones tiene la etapa actual.</p>
+          <div class="kicker">Mis inmuebles</div>
+            <h2 class="section-title">Tus inmuebles de interés y contratados</h2>
+            <p class="section-copy">Aquí se listan los inmuebles que marcaste con “Me interesa” y aquellos por los que ya hiciste algún pago o contrataste una etapa.</p>
         </div>
       </div>
       <div class="dashboard-grid">
         <div class="dashboard-card">
-          <div class="kicker">Lista de expedientes</div>
+          <div class="kicker">Mis inmuebles</div>
           <div class="case-list">
-            ${state.cases.length ? state.cases.map((caseItem) => `
-              <button class="case-item ${activeCase?.id === caseItem.id ? "active" : ""}" data-action="select-case" data-case-id="${caseItem.id}">
-                <div class="kicker">${escapeHtml(STATUS_LABELS[caseItem.status] || caseItem.status)}</div>
-                <strong>${escapeHtml(caseItem.property.title)}</strong>
-                <p>${escapeHtml(caseItem.property.city)} · ${escapeHtml(caseItem.property.zoneLabel || "")}</p>
-                <div class="progress"><span style="width:${Math.max(12, (caseItem.progress.approvedCount / 3) * 100)}%"></span></div>
-                <div class="small">Etapa actual: ${escapeHtml(STAGE_LABELS[caseItem.currentStage] || caseItem.currentStage)}</div>
-              </button>
-            `).join("") : `<div class="empty">Aún no has abierto ningún expediente. Desde el catálogo puedes marcar un inmueble y empezar.</div>`}
+            ${state.cases.length ? state.cases.map((caseItem) => renderMyPropertyItem(caseItem, activeCase)).join("") : `<div class="empty">Aún no has marcado ningún inmueble. Desde el catálogo puedes elegir “Me interesa” para guardarlo aquí.</div>`}
           </div>
         </div>
         ${renderCaseDetail(activeCase)}

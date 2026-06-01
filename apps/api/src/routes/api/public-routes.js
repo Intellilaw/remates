@@ -1,11 +1,12 @@
 import { mutateDb } from "../../data/store.js";
-import { describeDatabaseTarget } from "../../data/prisma-client.js";
+import { describeDatabaseTarget, getPrisma } from "../../data/prisma-client.js";
 import { config } from "../../config.js";
 import { authProviders, createAuthResponse, exposeUser, loginUser, registerUser, socialDemoLogin } from "../../services/auth-service.js";
 import { confirmMockPayment, createCheckout } from "../../services/payment-service.js";
+import { buildFallbackLocationImage } from "../../services/property-location-image-service.js";
 import { badRequest, forbidden, notFound, readJsonBody, sendJson, unauthorized } from "../../utils/http.js";
 import { hashPassword, normalizeEmail, randomId, sanitizeText } from "../../utils/security.js";
-import { actorCanAccessCase, caseSnapshot, getServiceStage, logAudit, propertyAccessForActor, propertySnapshot, requireAuth, stageProgress } from "../../domain/app-domain.js";
+import { actorCanAccessCase, caseSnapshot, getServiceStage, logAudit, propertyAccessForActor, propertySnapshot, requireAuth, requireRoles, stageProgress } from "../../domain/app-domain.js";
 
 const PUBLIC_PROPERTY_STATUS_ALIASES = {
   PUBLISHED: "PUBLISHED",
@@ -139,6 +140,12 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
   if (pathname === "/api/auth/social-demo" && req.method === "POST") {
     try {
       const body = await readJsonBody(req);
+      const prisma = await getPrisma();
+      if (prisma) {
+        const user = await socialDemoLoginPrisma(prisma, body.provider);
+        return sendJson(res, 200, createAuthResponse(user));
+      }
+
       const updated = await mutateDb(async (draft) => {
         const user = socialDemoLogin(draft, body.provider);
         draft.conversionEvents.push({
@@ -174,6 +181,16 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
     return sendJson(res, 200, {
       items: properties.map((property) => publicPropertySnapshot(db, property, actor))
     });
+  }
+
+  const propertyLocationImageMatch = pathname.match(/^\/api\/properties\/([^/]+)\/location-image$/);
+  if (propertyLocationImageMatch && req.method === "GET") {
+    const slug = decodeURIComponent(propertyLocationImageMatch[1]);
+    const property = db.properties.find((item) => item.slug === slug);
+    if (!property || !isPublicProperty(property)) {
+      return notFound(res, "Imagen no encontrada");
+    }
+    return sendLocationImage(res, property);
   }
 
   const propertyMatch = pathname.match(/^\/api\/properties\/([^/]+)$/);
@@ -459,4 +476,171 @@ function publicPropertySnapshot(db, property, actor) {
     ...snapshot,
     publicStatus: normalizePublicPropertyStatus(snapshot.publicStatus)
   };
+}
+
+function normalizeSocialProvider(provider) {
+  const normalizedProvider = String(provider || "").trim().toLowerCase();
+  if (!["google", "facebook"].includes(normalizedProvider)) {
+    throw new Error("Proveedor social no soportado");
+  }
+  return normalizedProvider;
+}
+
+function socialDemoProfile(provider) {
+  return {
+    email: `${provider}.demo@remates.mx`,
+    fullName: provider === "google" ? "Cliente Google" : "Cliente Facebook",
+    phone: "+52 55 0000 0000"
+  };
+}
+
+async function socialDemoLoginPrisma(prisma, providerValue) {
+  const provider = normalizeSocialProvider(providerValue);
+  const profile = socialDemoProfile(provider);
+  const now = new Date();
+
+  return prisma.$transaction(async (tx) => {
+    let user = await tx.user.findUnique({
+      where: { email: profile.email }
+    });
+
+    if (!user) {
+      const { salt, hash } = hashPassword("SocialDemo123!");
+      user = await tx.user.create({
+        data: {
+          id: randomId("usr"),
+          email: profile.email,
+          fullName: profile.fullName,
+          gender: "UNSPECIFIED",
+          phone: profile.phone,
+          status: "ACTIVE",
+          passwordSalt: salt,
+          passwordHash: hash,
+          createdAt: now
+        }
+      });
+    }
+
+    await tx.userRole.upsert({
+      where: {
+        userId_roleCode: {
+          userId: user.id,
+          roleCode: "CLIENT"
+        }
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        roleCode: "CLIENT"
+      }
+    });
+
+    await tx.authIdentity.upsert({
+      where: {
+        provider_providerSubject: {
+          provider,
+          providerSubject: profile.email
+        }
+      },
+      update: {
+        userId: user.id,
+        lastLoginAt: now
+      },
+      create: {
+        id: randomId("auth"),
+        userId: user.id,
+        provider,
+        providerSubject: profile.email,
+        lastLoginAt: now
+      }
+    });
+
+    await tx.conversionEvent.create({
+      data: {
+        id: randomId("conv"),
+        visitorSessionId: null,
+        userId: user.id,
+        caseId: null,
+        propertyId: null,
+        eventType: "register",
+        metadata: { source: provider },
+        createdAt: now
+      }
+    });
+
+    const roles = await tx.userRole.findMany({
+      where: { userId: user.id },
+      select: { roleCode: true }
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      gender: user.gender,
+      phone: user.phone,
+      status: user.status,
+      roles: roles.map((role) => role.roleCode)
+    };
+  });
+}
+
+async function sendLocationImage(res, property) {
+  const image = property.locationImage || buildFallbackLocationImage(property);
+  if (image.imageUrl?.startsWith("data:image/")) {
+    return sendDataImage(res, image.imageUrl);
+  }
+
+  if (!image.endpoint || !image.params || !config.googleMapsApiKey) {
+    return sendDataImage(res, buildFallbackLocationImage(property, "MISSING_GOOGLE_MAPS_IMAGE").imageUrl);
+  }
+
+  try {
+    const response = await fetch(buildGoogleImageUrl(image.endpoint, image.params));
+    if (!response.ok) {
+      throw new Error(`Google Maps image status ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.writeHead(200, {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=86400"
+    });
+    return res.end(buffer);
+  } catch {
+    return sendDataImage(res, buildFallbackLocationImage(property, "GOOGLE_IMAGE_FETCH_FAILED").imageUrl);
+  }
+}
+
+function buildGoogleImageUrl(endpoint, params) {
+  const url = new URL(endpoint);
+  if (url.hostname !== "maps.googleapis.com") {
+    throw new Error("Unsupported image provider");
+  }
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+  url.searchParams.set("key", config.googleMapsApiKey);
+  return url.toString();
+}
+
+function sendDataImage(res, dataUrl) {
+  const match = String(dataUrl || "").match(/^data:([^;,]+)(;charset=[^;,]+)?(;base64)?,(.*)$/);
+  if (!match) {
+    return sendJson(res, 404, { error: "Imagen no encontrada" });
+  }
+
+  const [, mimeType, charset = "", base64Flag, payload] = match;
+  const buffer = base64Flag
+    ? Buffer.from(payload, "base64")
+    : Buffer.from(decodeURIComponent(payload), "utf8");
+  res.writeHead(200, {
+    "Content-Type": `${mimeType}${charset || (mimeType === "image/svg+xml" ? "; charset=utf-8" : "")}`,
+    "Cache-Control": "public, max-age=3600"
+  });
+  return res.end(buffer);
 }

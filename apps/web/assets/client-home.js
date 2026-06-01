@@ -26,7 +26,7 @@ function renderTopbar() {
             ${userGreeting}
             <nav class="nav" aria-label="Navegación del dashboard">
               <a href="/">Inicio</a>
-              <button data-action="scroll" data-target="#dashboard-cases">Mis expedientes</button>
+              <button data-action="scroll" data-target="#dashboard-cases">Mis inmuebles</button>
               <button data-action="scroll" data-target="#dashboard-catalog">Inmuebles</button>
               ${state.me ? `<button class="ghost" data-action="logout">Salir</button>` : `<button class="primary" data-action="open-auth" data-mode="login">Iniciar sesión</button>`}
             </nav>
@@ -58,13 +58,6 @@ function renderTopbar() {
 }
 
 function renderHomeHero() {
-  const featured = state.properties.filter((item) => item.featured);
-  const highlighted = (featured.length ? featured : state.properties).slice(0, 2);
-  const highlightedTitle = featured.length ? "Inmuebles destacados" : "Inmuebles publicados";
-  const highlightedCopy = highlighted.length
-    ? "Una muestra de remates activos para compradores que necesitan claridad legal, operativa y económica antes de comprometer capital."
-    : "Cuando publiques, adjudiques o entregues un inmueble desde el panel interno, aparecerá aquí automáticamente.";
-
   return `
     <section class="hero shell">
       <div class="hero__grid">
@@ -81,35 +74,8 @@ function renderHomeHero() {
             <div class="stat"><strong>Sin sorpresas</strong><span>explicamos también adeudos y costos posteriores</span></div>
           </div>
         </div>
-        <aside class="hero__aside">
-          <div>
-            <h2 class="section-title">${highlightedTitle}</h2>
-            <p class="section-copy">${highlightedCopy}</p>
-          </div>
-          ${highlighted.map((property) => `
-            <div class="property-card">
-              ${renderPropertyCover(property, `
-                <div class="property-cover__badges">
-                  <span class="badge">${escapeHtml(property.city)}</span>
-                  ${renderPropertyPublicStamp(property)}
-                </div>
-                <div>
-                  <strong>${escapeHtml(property.title)}</strong>
-                    <div>Postura legal ${formatMoney(property.legalBidMxn)}</div>
-                </div>
-              `)}
-              <div class="property-card__body">
-                <div class="property-card__meta">
-                  <span class="chip">Avalúo ${formatMoney(property.estimatedValueMxn)}</span>
-                  <span class="chip">Postura ${formatMoney(property.legalBidMxn)}</span>
-                  <span class="chip">${escapeHtml(property.zoneLabel)}</span>
-                </div>
-                <p>${escapeHtml(property.shortDescription)}</p>
-                <button class="primary" data-action="open-property" data-slug="${property.slug}">Ver detalle</button>
-              </div>
-            </div>
-          `).join("")}
-          ${highlighted.length ? "" : `<div class="empty-state">No hay inmuebles publicados por ahora.</div>`}
+        <aside class="hero__aside hero__aside--catalog" id="hero-catalog">
+          ${renderCatalogContent()}
         </aside>
       </div>
       <div class="metric-strip">
@@ -118,6 +84,60 @@ function renderHomeHero() {
         <div class="metric"><strong>${formatMoney(70000)}</strong><span>posesión solo después de adjudicación judicial</span></div>
       </div>
     </section>
+  `;
+}
+
+const CATALOG_COPY = "Consulta avalúo, postura legal, almoneda, fecha de subasta y dirección completa. El expediente y el número de juzgado se reservan fuera de la ficha pública.";
+
+function renderCatalogContent(title = "Catálogo", copy = CATALOG_COPY) {
+  const items = filteredProperties();
+  const boroughs = [...new Set(state.properties.map((item) => item.city))].sort((left, right) => left.localeCompare(right, "es-MX"));
+
+  return `
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">${title}</h2>
+        <p class="section-copy">${copy}</p>
+      </div>
+      <div class="filters">
+        <select data-filter="borough">
+          <option value="all">Todas las alcaldías</option>
+          ${boroughs.map((item) => `<option value="${escapeHtml(item)}" ${state.filters.borough === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <div class="properties-grid">
+      ${items.length ? items.map((property) => {
+        const auctionDate = property.auctionDate ? formatDate(property.auctionDate) : "Fecha por confirmar";
+        return `
+          <article class="property-card">
+            ${renderPropertyCover(property, `
+              <div class="property-cover__badges">
+                <span class="badge">${escapeHtml(property.city)}</span>
+                <span class="badge badge--discount">${escapeHtml(discountShortLabel(property))}</span>
+                ${renderPropertyPublicStamp(property)}
+              </div>
+              <div>
+                <div class="kicker">${escapeHtml(property.zoneLabel)}</div>
+                <strong>${escapeHtml(property.title)}</strong>
+              </div>
+            `)}
+              <div class="property-card__body">
+                <div class="property-facts">
+                  <div><span>Avalúo</span><strong>${formatMoney(property.estimatedValueMxn)}</strong></div>
+                  <div><span>Postura legal</span><strong>${formatMoney(property.legalBidMxn)}</strong></div>
+                  <div class="property-fact--highlight"><span>Descuento estimado</span><strong>${escapeHtml(discountLabel(property))}</strong></div>
+                  <div><span>Almoneda</span><strong>${escapeHtml(auctionRoundLabel(property.auctionRound))}</strong></div>
+                  <div><span>Fecha de subasta</span><strong>${escapeHtml(auctionDate)}</strong></div>
+                </div>
+                ${property.fullAddress ? `<p class="property-address-line"><strong>Dirección:</strong> ${escapeHtml(property.fullAddress)}</p>` : ""}
+                <p>${escapeHtml(property.shortDescription)}</p>
+                <button class="primary" data-action="open-property" data-slug="${property.slug}">Ver detalle</button>
+            </div>
+          </article>
+        `;
+      }).join("") : `<div class="empty-state">No hay inmuebles publicados con estos filtros.</div>`}
+    </div>
   `;
 }
 
@@ -212,55 +232,10 @@ function renderEducation() {
   `;
 }
 
-function renderListings(sectionId = "listings", title = "Remates en CDMX", copy = "Consulta avalúo, postura legal, almoneda, fecha de subasta y dirección completa. El expediente y el número de juzgado se reservan fuera de la ficha pública.") {
-  const items = filteredProperties();
-  const boroughs = [...new Set(state.properties.map((item) => item.city))].sort((left, right) => left.localeCompare(right, "es-MX"));
-
+function renderListings(sectionId = "listings", title = "Catálogo", copy = CATALOG_COPY) {
   return `
     <section class="section shell" id="${sectionId}">
-      <div class="section-head">
-        <div>
-          <div class="kicker">Catálogo</div>
-          <h2 class="section-title">${title}</h2>
-          <p class="section-copy">${copy}</p>
-        </div>
-        <div class="filters">
-          <select data-filter="borough">
-            <option value="all">Todas las alcaldías</option>
-            ${boroughs.map((item) => `<option value="${escapeHtml(item)}" ${state.filters.borough === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
-          </select>
-        </div>
-      </div>
-      <div class="properties-grid">
-        ${items.length ? items.map((property) => {
-          const auctionDate = property.auctionDate ? formatDate(property.auctionDate) : "Fecha por confirmar";
-          return `
-            <article class="property-card">
-              ${renderPropertyCover(property, `
-                <div class="property-cover__badges">
-                  <span class="badge">${escapeHtml(property.city)}</span>
-                  ${renderPropertyPublicStamp(property)}
-                </div>
-                <div>
-                  <div class="kicker">${escapeHtml(property.zoneLabel)}</div>
-                  <strong>${escapeHtml(property.title)}</strong>
-                </div>
-              `)}
-                <div class="property-card__body">
-                  <div class="property-facts">
-                    <div><span>Avalúo</span><strong>${formatMoney(property.estimatedValueMxn)}</strong></div>
-                    <div><span>Postura legal</span><strong>${formatMoney(property.legalBidMxn)}</strong></div>
-                    <div><span>Almoneda</span><strong>${escapeHtml(auctionRoundLabel(property.auctionRound))}</strong></div>
-                    <div><span>Fecha de subasta</span><strong>${escapeHtml(auctionDate)}</strong></div>
-                  </div>
-                  ${property.fullAddress ? `<p class="property-address-line"><strong>Dirección:</strong> ${escapeHtml(property.fullAddress)}</p>` : ""}
-                  <p>${escapeHtml(property.shortDescription)}</p>
-                  <button class="primary" data-action="open-property" data-slug="${property.slug}">Ver detalle</button>
-              </div>
-            </article>
-          `;
-        }).join("") : `<div class="empty-state">No hay inmuebles publicados con estos filtros.</div>`}
-      </div>
+      ${renderCatalogContent(title, copy)}
     </section>
   `;
 }
@@ -271,7 +246,7 @@ function renderDashboardAccess() {
       <div class="section-card access-card">
         <div class="kicker">Acceso privado</div>
         <h1 class="section-title">Este dashboard es tu espacio de seguimiento.</h1>
-        <p class="section-copy">Aquí verás tus expedientes, fechas de almoneda, pagos por etapa, mensajes y, cuando corresponda, órgano subastador y revisión legal del inmueble.</p>
+        <p class="section-copy">Aquí verás tus inmuebles, fechas de almoneda, pagos por etapa, mensajes y, cuando corresponda, órgano subastador y revisión legal.</p>
         <div class="inline-actions">
           <button class="primary" data-action="open-auth" data-mode="login">Iniciar sesión</button>
           <a class="secondary" href="/">Volver al inicio</a>

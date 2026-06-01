@@ -269,20 +269,6 @@ function renderReview() {
           </label>
           <div class="two-col">
             <label>
-              <span>Estado</span>
-              <input name="state" value="${fieldValue(state.draft.state)}" required />
-            </label>
-            <label>
-              <span>Ciudad o alcaldía</span>
-              <input name="city" value="${fieldValue(state.draft.city)}" required />
-            </label>
-          </div>
-          <label>
-            <span>Colonia</span>
-            <input name="zoneLabel" value="${fieldValue(state.draft.zoneLabel)}" required />
-          </label>
-          <div class="two-col">
-            <label>
               <span>Descuento %</span>
               <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" value="${Number(state.draft.discountPct || 0)}" required />
             </label>
@@ -296,10 +282,6 @@ function renderReview() {
           <label>
             <span>Descripción</span>
             <textarea name="shortDescription" rows="3" required>${fieldValue(state.draft.shortDescription)}</textarea>
-          </label>
-          <label>
-            <span>Tags</span>
-            <input name="tags" value="${escapeHtml((state.draft.tags || []).join(", "))}" />
           </label>
         </div>
 
@@ -358,14 +340,85 @@ function renderCourtOptions(selectedCourt = "") {
   `;
 }
 
+function deriveLocationParts(fullAddress, fallback = {}) {
+  const parts = String(fullAddress || "")
+    .split(",")
+    .map((part) => cleanAddressPart(part))
+    .filter(Boolean);
+  const stateIndex = findLastIndex(parts, (part) => Boolean(stateNameFromText(part)));
+  const state = stateIndex >= 0
+    ? stateNameFromText(parts[stateIndex])
+    : stateNameFromText(parts.at(-1) || "") || stateNameFromText(fallback.state) || "Ciudad de México";
+  const beforeState = stateIndex >= 0 ? parts.slice(0, stateIndex) : parts.slice(0, -1);
+  const usableParts = beforeState
+    .map((part) => cleanAddressPart(part.replace(/\bC\.?\s*P\.?\s*\d{4,6}\b/gi, "").replace(/\b\d{4,6}\b/g, "")))
+    .filter((part) => part && !isAddressUnitPart(part));
+  const city = toDisplayLocation(usableParts.at(-1) || fallback.city || (state === "Ciudad de México" ? "Ciudad de México" : state));
+  const zoneLabel = toDisplayLocation(stripZonePrefix(usableParts.at(-2) || fallback.zoneLabel || city));
+
+  return {
+    state,
+    city,
+    zoneLabel
+  };
+}
+
+function findLastIndex(items, predicate) {
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    if (predicate(items[index], index)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function cleanAddressPart(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function isAddressUnitPart(value) {
+  return /^(depto|departamento|int|interior|local|piso|torre|edificio)\b/i.test(cleanAddressPart(value));
+}
+
+function stripZonePrefix(value) {
+  return cleanAddressPart(value).replace(/^(colonia|col\.?|fraccionamiento|fracc\.?|barrio|pueblo)\s+/i, "");
+}
+
+function stateNameFromText(value) {
+  const normalized = normalizeLocationText(value);
+  const state = MEXICAN_STATE_ALIASES.find(([alias]) => normalized.includes(alias));
+  return state?.[1] || "";
+}
+
+function normalizeLocationText(value) {
+  return cleanAddressPart(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+}
+
+function toDisplayLocation(value) {
+  const clean = cleanAddressPart(value);
+  if (!clean) {
+    return "Ubicación por confirmar";
+  }
+  if (stateNameFromText(clean) === "Ciudad de México" && ["CDMX", "CIUDAD DE MEXICO"].includes(normalizeLocationText(clean))) {
+    return "Ciudad de México";
+  }
+  return clean
+    .toLocaleLowerCase("es-MX")
+    .replace(/(^|[\s.])([a-záéíóúñü])/g, (match, separator, letter) => `${separator}${letter.toLocaleUpperCase("es-MX")}`);
+}
+
 function formToDraft(form) {
   const formData = new FormData(form);
+  const location = deriveLocationParts(formData.get("fullAddress"), state.draft || {});
   return {
     title: String(formData.get("title") || ""),
     slug: slugify(String(formData.get("slug") || formData.get("title") || "")),
-    state: String(formData.get("state") || ""),
-    city: String(formData.get("city") || ""),
-    zoneLabel: String(formData.get("zoneLabel") || ""),
+    state: location.state,
+    city: location.city,
+    zoneLabel: location.zoneLabel,
     estimatedValueMxn: parseCurrencyValue(formData.get("estimatedValueMxn")),
     legalBidMxn: parseCurrencyValue(formData.get("legalBidMxn")),
     discountPct: Number(formData.get("discountPct") || 0),
@@ -378,12 +431,46 @@ function formToDraft(form) {
     legalSummary: String(formData.get("legalSummary") || ""),
     riskNotes: String(formData.get("riskNotes") || ""),
     featured: true,
-    tags: String(formData.get("tags") || "")
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean)
+    tags: ["Remate"]
   };
 }
+
+const MEXICAN_STATE_ALIASES = [
+  ["CIUDAD DE MEXICO", "Ciudad de México"],
+  ["CDMX", "Ciudad de México"],
+  ["AGUASCALIENTES", "Aguascalientes"],
+  ["BAJA CALIFORNIA SUR", "Baja California Sur"],
+  ["BAJA CALIFORNIA", "Baja California"],
+  ["CAMPECHE", "Campeche"],
+  ["CHIAPAS", "Chiapas"],
+  ["CHIHUAHUA", "Chihuahua"],
+  ["COAHUILA", "Coahuila"],
+  ["COLIMA", "Colima"],
+  ["DURANGO", "Durango"],
+  ["GUANAJUATO", "Guanajuato"],
+  ["GUERRERO", "Guerrero"],
+  ["HIDALGO", "Hidalgo"],
+  ["JALISCO", "Jalisco"],
+  ["ESTADO DE MEXICO", "Estado de México"],
+  ["EDOMEX", "Estado de México"],
+  ["MICHOACAN", "Michoacán"],
+  ["MORELOS", "Morelos"],
+  ["NAYARIT", "Nayarit"],
+  ["NUEVO LEON", "Nuevo León"],
+  ["OAXACA", "Oaxaca"],
+  ["PUEBLA", "Puebla"],
+  ["QUERETARO", "Querétaro"],
+  ["QUINTANA ROO", "Quintana Roo"],
+  ["SAN LUIS POTOSI", "San Luis Potosí"],
+  ["SINALOA", "Sinaloa"],
+  ["SONORA", "Sonora"],
+  ["TABASCO", "Tabasco"],
+  ["TAMAULIPAS", "Tamaulipas"],
+  ["TLAXCALA", "Tlaxcala"],
+  ["VERACRUZ", "Veracruz"],
+  ["YUCATAN", "Yucatán"],
+  ["ZACATECAS", "Zacatecas"]
+];
 
 function slugify(value) {
   return String(value || "")

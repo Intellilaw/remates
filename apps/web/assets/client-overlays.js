@@ -22,6 +22,7 @@ function renderPropertyDrawer() {
             <div class="stage-strip">
               <span class="chip">Avalúo ${formatMoney(state.propertyDetail.estimatedValueMxn)}</span>
               <span class="chip">Postura legal ${formatMoney(state.propertyDetail.legalBidMxn)}</span>
+              <span class="chip chip--discount">${escapeHtml(discountLabel(state.propertyDetail))}</span>
               <span class="chip">${escapeHtml(auctionRoundLabel(state.propertyDetail.auctionRound))}</span>
               <span class="chip">${escapeHtml(state.propertyDetail.zoneLabel)}</span>
               ${showDate ? `<span class="chip">Subasta ${escapeHtml(formatDate(state.propertyDetail.auctionDate))}</span>` : ""}
@@ -33,19 +34,36 @@ function renderPropertyDrawer() {
           <div>
             ${renderPropertyCover(state.propertyDetail, `
               <div>
-                <div class="play-badge">${state.propertyDetail.discountPct}%</div>
+                <div class="play-badge play-badge--discount">
+                  <strong>${discountPctValue(state.propertyDetail)}%</strong>
+                  <span>por debajo del avalúo</span>
+                </div>
                 <h3>${formatMoney(state.propertyDetail.estimatedValueMxn)}</h3>
                 <p>${showCourt ? "Ya tienes visibilidad operativa para esta oportunidad." : "El número de juzgado se revisa dentro de la asesoría inicial."}</p>
               </div>
             `, "property-cover--drawer")}
             <div class="inline-actions" style="margin-top:18px;">
-              <button class="primary" data-action="interest-property" data-property-id="${state.propertyDetail.id}">${relatedCase ? "Ir a mi expediente" : "Me interesa este inmueble"}</button>
+              <button class="primary" data-action="interest-property" data-property-id="${state.propertyDetail.id}">${relatedCase ? "Ver en Mis inmuebles" : "Me interesa este inmueble"}</button>
+              <button class="icon-button icon-button--share" data-action="share-property" aria-label="Compartir este inmueble" title="Compartir este inmueble">${renderShareIcon()}</button>
+              <button class="ghost" data-action="copy-property-link" aria-label="Copiar enlace de este inmueble">Copiar enlace</button>
               <button class="ghost" data-action="close-property">Cerrar</button>
             </div>
           </div>
         </div>
       </div>
     </div>
+  `;
+}
+
+function renderShareIcon() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="18" cy="5" r="3"></circle>
+      <circle cx="6" cy="12" r="3"></circle>
+      <circle cx="18" cy="19" r="3"></circle>
+      <path d="M8.7 10.6 15.3 6.4"></path>
+      <path d="M8.7 13.4 15.3 17.6"></path>
+    </svg>
   `;
 }
 
@@ -70,7 +88,7 @@ function renderPublicPropertyDetails(relatedCase, showDate) {
     : relatedCase?.progress?.nextStageCode === "ADVISORY" && relatedCase.progress.canPurchaseNextStage
       ? `<button class="primary" data-action="checkout" data-case-id="${relatedCase.id}" data-stage-code="ADVISORY">Contratar asesoría inicial</button>`
       : relatedCase
-        ? `<a class="primary" href="${DASHBOARD_PATH}">Ver este expediente en mi dashboard</a>`
+        ? `<a class="primary" href="${DASHBOARD_PATH}">Ver este inmueble en mi dashboard</a>`
         : "";
 
   return `
@@ -100,7 +118,7 @@ function renderAuth() {
   const copy = isRegister
     ? "Crea tu cuenta para guardar inmuebles, consultar fechas y avanzar con acompañamiento por etapas."
     : isLogin
-      ? "Inicia sesión para consultar tus expedientes, pagos y mensajes."
+      ? "Inicia sesión para consultar tus inmuebles, pagos y mensajes."
       : isResetSent
         ? "Si el correo existe, generamos instrucciones para restablecer tu contraseña."
         : isResetConfirm
@@ -166,8 +184,8 @@ function renderAuth() {
             <h2>${title}</h2>
             <p>${copy}</p>
             ${isLogin || isRegister ? `<div class="inline-actions">
-              <button type="button" class="ghost" data-action="social-login" data-provider="google">Continuar con Google</button>
-              <button type="button" class="ghost" data-action="social-login" data-provider="facebook">Continuar con Facebook</button>
+              <button type="button" class="ghost" data-action="social-login" data-provider="google" onclick="window.rematesCliente.socialLogin('google'); return false;">Continuar con Google</button>
+              <button type="button" class="ghost" data-action="social-login" data-provider="facebook" onclick="window.rematesCliente.socialLogin('facebook'); return false;">Continuar con Facebook</button>
             </div>` : ""}
           </div>
           <div>

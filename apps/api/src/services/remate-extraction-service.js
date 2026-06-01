@@ -116,6 +116,8 @@ export async function extractRemateFromImage({ imageDataUrl, textHint = "" }) {
 }
 
 async function extractWithOpenAI({ imageDataUrl, textHint }) {
+  const currentDate = new Date().toISOString().slice(0, 10);
+  const currentYear = String(new Date().getFullYear());
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -136,6 +138,9 @@ async function extractWithOpenAI({ imageDataUrl, textHint }) {
                 "La postura legal debe ser el monto expresamente indicado; si no aparece, calcula dos terceras partes del valor de avalúo y marca legalBidWasComputed=true.",
                 "Normaliza montos a numeros MXN sin comas ni simbolos.",
                 "Normaliza fechas a YYYY-MM-DD y horas a HH:mm si aparecen.",
+                `La fecha actual del sistema es ${currentDate}; el ano actual es ${currentYear}.`,
+                `Si el edicto dice "ano en curso", "presente ano" o solo muestra dia y mes sin ano, usa ${currentYear} como ano del remate.`,
+                `Si aparece un ano anterior a ${currentYear} cerca de la fecha del remate, usalo solo si el edicto indica expresamente que el remate es de ese ano; de lo contrario usa ${currentYear}.`,
                 "No inventes juzgado, direccion ni fecha si no son legibles."
               ].join(" ")
             }
@@ -345,31 +350,56 @@ function uniqueMissingFields(value) {
 }
 
 function normalizeDate(value) {
-  const text = sanitizeText(value || "", 40).toLowerCase();
+  const text = sanitizeText(value || "", 100).toLowerCase();
   if (!text) {
     return null;
   }
 
   const iso = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
   if (iso) {
-    return `${iso[1]}-${iso[2]}-${iso[3]}`;
+    return formatDateParts(iso[1], iso[2], iso[3]);
   }
 
   const slash = text.match(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b/);
   if (slash) {
     const year = slash[3].length === 2 ? `20${slash[3]}` : slash[3];
-    return `${year}-${slash[2].padStart(2, "0")}-${slash[1].padStart(2, "0")}`;
+    return formatDateParts(year, slash[2], slash[1]);
   }
 
-  const spanish = text.match(/\b(\d{1,2})\s+de\s+([a-záéíóúñ]+)\s+de\s+(\d{4})\b/i);
+  const slashWithoutYear = text.match(/\b(\d{1,2})[/-](\d{1,2})\b/);
+  if (slashWithoutYear) {
+    return formatDateParts(currentAuctionYear(), slashWithoutYear[2], slashWithoutYear[1]);
+  }
+
+  const spanish = text.match(/\b(\d{1,2})\s+de\s+([\p{L}]+)(?:\s+(?:de|del)\s+(\d{4}))?\b/iu);
   if (spanish) {
     const month = MONTHS[removeDiacritics(spanish[2])];
     if (month) {
-      return `${spanish[3]}-${month}-${spanish[1].padStart(2, "0")}`;
+      return formatDateParts(spanish[3] || currentAuctionYear(), month, spanish[1]);
     }
   }
 
   return null;
+}
+
+function formatDateParts(year, month, day) {
+  const normalizedYear = normalizeAuctionYear(year);
+  const normalizedMonth = String(month || "").padStart(2, "0");
+  const normalizedDay = String(day || "").padStart(2, "0");
+  return `${normalizedYear}-${normalizedMonth}-${normalizedDay}`;
+}
+
+function normalizeAuctionYear(year) {
+  const parsedYear = Number(year);
+  const currentYear = Number(currentAuctionYear());
+  if (!Number.isFinite(parsedYear) || parsedYear < currentYear) {
+    return String(currentYear);
+  }
+  return String(parsedYear);
+}
+
+function currentAuctionYear() {
+  return String(new Date().getFullYear());
 }
 
 function normalizeTime(value) {
@@ -420,7 +450,7 @@ function findDate(text) {
     return normalizeDate(slash[0]);
   }
 
-  const spanish = text.match(/\b\d{1,2}\s+de\s+[a-záéíóúñ]+\s+de\s+\d{4}\b/iu);
+  const spanish = text.match(/\b(\d{1,2})\s+de\s+([\p{L}]+)(?:\s+(?:de|del)\s+(\d{4}))?\b/iu);
   return spanish ? normalizeDate(spanish[0]) : null;
 }
 

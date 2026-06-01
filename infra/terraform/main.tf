@@ -87,6 +87,12 @@ variable "openai_api_key" {
   default   = ""
 }
 
+variable "google_maps_api_key" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
 variable "openai_extraction_model" {
   type    = string
   default = "gpt-4.1-mini"
@@ -297,6 +303,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     MERCADO_PAGO_ACCESS_TOKEN   = var.mercado_pago_access_token
     MERCADO_PAGO_WEBHOOK_SECRET = var.mercado_pago_webhook_secret
     OPENAI_API_KEY              = var.openai_api_key
+    GOOGLE_MAPS_API_KEY         = var.google_maps_api_key
   })
 }
 
@@ -389,7 +396,8 @@ resource "aws_ecs_task_definition" "api" {
       { name = "JWT_SECRET", valueFrom = "${aws_secretsmanager_secret.app.arn}:JWT_SECRET::" },
       { name = "MERCADO_PAGO_ACCESS_TOKEN", valueFrom = "${aws_secretsmanager_secret.app.arn}:MERCADO_PAGO_ACCESS_TOKEN::" },
       { name = "MERCADO_PAGO_WEBHOOK_SECRET", valueFrom = "${aws_secretsmanager_secret.app.arn}:MERCADO_PAGO_WEBHOOK_SECRET::" },
-      { name = "OPENAI_API_KEY", valueFrom = "${aws_secretsmanager_secret.app.arn}:OPENAI_API_KEY::" }
+      { name = "OPENAI_API_KEY", valueFrom = "${aws_secretsmanager_secret.app.arn}:OPENAI_API_KEY::" },
+      { name = "GOOGLE_MAPS_API_KEY", valueFrom = "${aws_secretsmanager_secret.app.arn}:GOOGLE_MAPS_API_KEY::" }
     ]
     healthCheck = {
       command     = ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]

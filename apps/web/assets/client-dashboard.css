@@ -24,6 +24,32 @@
   font-size: 1.9rem;
 }
 
+.play-badge--discount {
+  width: 124px;
+  height: 124px;
+  align-content: center;
+  gap: 4px;
+  padding: 14px;
+  line-height: 1.08;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.play-badge--discount strong {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.play-badge--discount span {
+  display: block;
+  max-width: 10ch;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .dashboard {
   padding-bottom: 36px;
 }
@@ -45,7 +71,7 @@
 }
 
 .dashboard-hero__stats {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .dashboard-detail,
@@ -60,6 +86,19 @@
   gap: 18px;
   align-items: start;
   flex-wrap: wrap;
+}
+
+.my-property-item {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  color: inherit;
+  text-align: left;
+}
+
+.my-property-item__head {
+  display: grid;
+  gap: 8px;
 }
 
 .detail-grid {
