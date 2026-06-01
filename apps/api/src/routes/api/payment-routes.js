@@ -3,6 +3,7 @@ import { storeWebhookEvent } from "../../services/payment-service.js";
 import { badRequest, forbidden, readJsonBody, sendJson } from "../../utils/http.js";
 import { randomId, sanitizeText } from "../../utils/security.js";
 import { actorCanAccessConversation, logAudit, requireAuth } from "../../domain/app-domain.js";
+import { exposeUser } from "../../services/auth-service.js";
 
 export async function handlePaymentRoutes(req, res, pathname, { db, actor }) {
   if (pathname === "/api/payments/webhook/mercadopago" && req.method === "POST") {

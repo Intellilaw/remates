@@ -446,7 +446,10 @@ async function api(path, options = {}) {
 
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload.error || "No fue posible completar la acción");
+    const error = new Error(payload.error || "No fue posible completar la acción");
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
   }
 
   return payload;
@@ -499,13 +502,23 @@ async function loadSession() {
     state.cases = cases.items;
     const preferredCase = state.cases.find((item) => item.id === state.selectedCaseId)?.id || state.cases[0]?.id || null;
     setSelectedCase(preferredCase);
-    const activeCase = getSelectedCase();
-    if (activeCase?.conversationId) {
+  } catch (error) {
+    if (error.status === 401 || error.status === 403) {
+      logout(false);
+      return;
+    }
+    throw error;
+  }
+
+  const activeCase = getSelectedCase();
+  if (activeCase?.conversationId) {
+    try {
       await loadMessages(activeCase.conversationId);
       await ensureConversationPolling();
+    } catch {
+      state.messages = [];
+      setToast("No pudimos cargar los mensajes, pero tu sesión sigue activa.");
     }
-  } catch {
-    logout(false);
   }
 }
 
