@@ -271,7 +271,8 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
       }
 
       const updated = await mutateDb(async (draft) => {
-        const assignedStaffUserId = defaultAssignedStaffUserId(draft);
+        const selectedStaffUserId = defaultAssignedStaffUserId(draft, actor.id);
+        const assignedStaffUserId = selectedStaffUserId && selectedStaffUserId !== actor.id ? selectedStaffUserId : null;
         const now = new Date().toISOString();
         const caseRecord = {
           id: randomId("case"),
@@ -464,9 +465,12 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
   return false;
 }
 
-function defaultAssignedStaffUserId(db) {
+function defaultAssignedStaffUserId(db, excludedUserId) {
   const preferredRoles = ["SALES", "LEGAL", "ADMIN"];
-  const staff = db.users.find((user) => preferredRoles.some((role) => user.roles?.includes(role)));
+  const staff = db.users.find((user) => (
+    user.id !== excludedUserId &&
+    preferredRoles.some((role) => user.roles?.includes(role))
+  ));
   return staff?.id || null;
 }
 
