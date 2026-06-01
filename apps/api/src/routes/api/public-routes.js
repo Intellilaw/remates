@@ -271,19 +271,21 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
       }
 
       const updated = await mutateDb(async (draft) => {
+        const assignedStaffUserId = defaultAssignedStaffUserId(draft);
+        const now = new Date().toISOString();
         const caseRecord = {
           id: randomId("case"),
           userId: actor.id,
           propertyId: body.propertyId,
           status: "NEW",
           currentStage: "LEAD",
-          assignedStaffUserId: "usr_sales_demo",
+          assignedStaffUserId,
           leadSource: sanitizeText(body.leadSource || "direct", 80),
           utmSource: sanitizeText(body.utmSource || "", 80),
           utmMedium: sanitizeText(body.utmMedium || "", 80),
           utmCampaign: sanitizeText(body.utmCampaign || "", 120),
-          createdAt: new Date().toISOString(),
-          lastActivityAt: new Date().toISOString()
+          createdAt: now,
+          lastActivityAt: now
         };
         draft.cases.push(caseRecord);
         draft.caseEvents.push({
@@ -292,7 +294,7 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
           eventType: "CASE_CREATED",
           actorUserId: actor.id,
           metadata: { leadSource: caseRecord.leadSource },
-          createdAt: new Date().toISOString()
+          createdAt: now
         });
         draft.conversionEvents.push({
           id: randomId("conv"),
@@ -302,27 +304,27 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
           propertyId: caseRecord.propertyId,
           eventType: "case_created",
           metadata: { leadSource: caseRecord.leadSource },
-          createdAt: new Date().toISOString()
+          createdAt: now
         });
         const conversation = {
           id: randomId("conv"),
           caseId: caseRecord.id,
           status: "OPEN",
-          lastMessageAt: new Date().toISOString()
+          lastMessageAt: assignedStaffUserId ? now : null
         };
         draft.conversations.push(conversation);
-        draft.conversationParticipants.push(
-          { conversationId: conversation.id, userId: actor.id, participantType: "CLIENT" },
-          { conversationId: conversation.id, userId: "usr_sales_demo", participantType: "STAFF" }
-        );
-        draft.messages.push({
-          id: randomId("msg"),
-          conversationId: conversation.id,
-          senderUserId: "usr_sales_demo",
-          body: "Abrimos tu expediente y preparamos la estrategia para la primera asesoría.",
-          createdAt: new Date().toISOString(),
-          readAt: null
-        });
+        draft.conversationParticipants.push({ conversationId: conversation.id, userId: actor.id, participantType: "CLIENT" });
+        if (assignedStaffUserId) {
+          draft.conversationParticipants.push({ conversationId: conversation.id, userId: assignedStaffUserId, participantType: "STAFF" });
+          draft.messages.push({
+            id: randomId("msg"),
+            conversationId: conversation.id,
+            senderUserId: assignedStaffUserId,
+            body: "Abrimos tu expediente y preparamos la estrategia para la primera asesoría.",
+            createdAt: now,
+            readAt: null
+          });
+        }
         return draft;
       });
 
@@ -460,6 +462,12 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
 
 
   return false;
+}
+
+function defaultAssignedStaffUserId(db) {
+  const preferredRoles = ["SALES", "LEGAL", "ADMIN"];
+  const staff = db.users.find((user) => preferredRoles.some((role) => user.roles?.includes(role)));
+  return staff?.id || null;
 }
 
 function normalizePublicPropertyStatus(status) {
