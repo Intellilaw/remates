@@ -38,7 +38,7 @@ function renderPropertyDrawer() {
                   <strong>${discountPctValue(state.propertyDetail)}%</strong>
                   <span>por debajo del avalúo</span>
                 </div>
-                <h3>${formatMoney(state.propertyDetail.estimatedValueMxn)}</h3>
+                <h3>${formatMoney(state.propertyDetail.legalBidMxn)}</h3>
                 <p>${showCourt ? "Ya tienes visibilidad operativa para esta oportunidad." : "El número de juzgado se revisa dentro de la asesoría inicial."}</p>
               </div>
             `, "property-cover--drawer")}
