@@ -16,7 +16,8 @@ const syncedAssetRoots = [
 const webShellFiles = [
   path.join("apps", "web", "index.html"),
   path.join("apps", "web", "dashboard.html"),
-  path.join("apps", "admin", "index.html")
+  path.join("apps", "admin", "index.html"),
+  path.join("apps", "mobile", "index.html")
 ];
 
 function walk(dir) {
@@ -68,17 +69,24 @@ for (const assetName of sharedAssets) {
   }
 }
 
+const appVersionMatch = fs
+  .readFileSync(path.join(root, "apps", "shared", "app-version.js"), "utf8")
+  .match(/REMATES_APP_VERSION\s*=\s*"([^"]+)"/);
+const appVersion = appVersionMatch?.[1];
+
+if (!appVersion) {
+  process.stderr.write("Unable to read REMATES_APP_VERSION from apps/shared/app-version.js.\n");
+  process.exit(1);
+}
+
 for (const shellFile of webShellFiles) {
   const shellPath = path.join(root, shellFile);
   const shell = fs.readFileSync(shellPath, "utf8");
+  const expectedSharedAppVersion = `src="/assets/app-version.js?v=${appVersion}"`;
+  const expectedMobileAppVersion = `src="assets/app-version.js?v=${appVersion}"`;
 
-  if (shell.includes("app-version.js?v=")) {
-    process.stderr.write(`${shellFile} must load app-version.js without a version query string.\n`);
-    process.exit(1);
-  }
-
-  if (!shell.includes('src="/assets/app-version.js"')) {
-    process.stderr.write(`${shellFile} must load the shared /assets/app-version.js file.\n`);
+  if (!shell.includes(expectedSharedAppVersion) && !shell.includes(expectedMobileAppVersion)) {
+    process.stderr.write(`${shellFile} must load app-version.js with ?v=${appVersion} for browser cache busting.\n`);
     process.exit(1);
   }
 }

@@ -6,6 +6,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sharedAssets = ["app-version.js", "court-options.js"];
 const assetTargets = ["mobile", "web", "admin"];
 const capacitorPublicAssets = path.join(root, "android", "app", "src", "main", "assets", "public", "assets");
+const shellFiles = [
+  path.join(root, "apps", "web", "index.html"),
+  path.join(root, "apps", "web", "dashboard.html"),
+  path.join(root, "apps", "admin", "index.html"),
+  path.join(root, "apps", "mobile", "index.html")
+];
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,6 +33,30 @@ async function copyWithRetry(source, destination) {
   }
 }
 
+function readVersion(source) {
+  const match = source.match(/REMATES_APP_VERSION\s*=\s*"([^"]+)"/);
+  if (!match) {
+    throw new Error("Unable to read REMATES_APP_VERSION from apps/shared/app-version.js");
+  }
+  return match[1];
+}
+
+async function updateShellAssetVersions(version) {
+  for (const shellFile of shellFiles) {
+    const html = await fs.readFile(shellFile, "utf8");
+    const updated = html.replace(
+      /((?:href|src)="[^"]+\.(?:css|js))(?:\?v=[^"]*)?(")/g,
+      `$1?v=${version}$2`
+    );
+    if (updated !== html) {
+      await fs.writeFile(shellFile, updated, "utf8");
+    }
+  }
+}
+
+const appVersionSource = await fs.readFile(path.join(root, "apps", "shared", "app-version.js"), "utf8");
+const appVersion = readVersion(appVersionSource);
+
 for (const fileName of sharedAssets) {
   const source = path.join(root, "apps", "shared", fileName);
 
@@ -43,3 +73,5 @@ for (const fileName of sharedAssets) {
     }
   }
 }
+
+await updateShellAssetVersions(appVersion);
