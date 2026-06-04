@@ -392,18 +392,12 @@ function renderPropertyEditForm(property) {
             ${renderCurrencyInput("legalBidMxn", Number(property.legalBidMxn || 0))}
           </label>
         </div>
-        <div class="two-col">
-          <label class="field-label">
-            <span>Descuento %</span>
-            <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" value="${Number(property.discountPct || 0)}" required />
-          </label>
-          <label class="field-label">
-            <span>Almoneda</span>
-            <select name="auctionRound" required>
-              ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}" ${property.auctionRound === item ? "selected" : ""}>${escapeHtml(auctionRoundLabel(item))}</option>`).join("")}
-            </select>
-          </label>
-        </div>
+        <label class="field-label">
+          <span>Almoneda</span>
+          <select name="auctionRound" required>
+            ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}" ${property.auctionRound === item ? "selected" : ""}>${escapeHtml(auctionRoundLabel(item))}</option>`).join("")}
+          </select>
+        </label>
         <label class="field-label">
           <span>Descripción</span>
           <textarea name="shortDescription" rows="3" required>${escapeHtml(property.shortDescription || "")}</textarea>
@@ -503,18 +497,12 @@ function renderProperties() {
                 <span>Título</span>
                 <input name="title" required />
               </label>
-              <div class="two-col">
-                <label class="field-label">
-                  <span>Descuento %</span>
-                  <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" required />
-                </label>
-                <label class="field-label">
-                  <span>Almoneda</span>
-                  <select name="auctionRound" required>
-                    ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}">${escapeHtml(auctionRoundLabel(item))}</option>`).join("")}
-                  </select>
-                </label>
-              </div>
+              <label class="field-label">
+                <span>Almoneda</span>
+                <select name="auctionRound" required>
+                  ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}">${escapeHtml(auctionRoundLabel(item))}</option>`).join("")}
+                </select>
+              </label>
               <label class="field-label">
                 <span>Descripción</span>
                 <textarea name="shortDescription" rows="3" required></textarea>
@@ -536,7 +524,7 @@ function renderProperties() {
                 <span class="chip">${money(property.estimatedValueMxn)}</span>
                 <span class="chip">Postura ${money(property.legalBidMxn)}</span>
                 <span class="chip">${escapeHtml(auctionRoundLabel(property.auctionRound))}</span>
-                <span class="chip">-${property.discountPct}%</span>
+                <span class="chip">-${propertyDiscountPct(property)}%</span>
                 <span class="chip">${property.featured ? "Destacado" : "Normal"}</span>
               </div>
               ${state.editingPropertyId === property.id ? renderPropertyEditForm(property) : `

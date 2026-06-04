@@ -161,11 +161,6 @@ function auctionRoundLabel(value) {
 }
 
 function discountPctValue(property) {
-  const explicitDiscount = Number(property?.discountPct);
-  if (Number.isFinite(explicitDiscount) && explicitDiscount > 0) {
-    return Math.round(explicitDiscount);
-  }
-
   const estimatedValue = Number(property?.estimatedValueMxn || 0);
   const legalBid = Number(property?.legalBidMxn || 0);
   if (estimatedValue > 0 && legalBid > 0 && legalBid < estimatedValue) {

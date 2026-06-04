@@ -74,6 +74,15 @@ function propertyStatusLabel(status) {
   return PROPERTY_STATUS_LABELS[status] || status || "BORRADOR";
 }
 
+function propertyDiscountPct(property) {
+  const estimatedValue = Number(property?.estimatedValueMxn || 0);
+  const legalBid = Number(property?.legalBidMxn || 0);
+  if (!estimatedValue || !legalBid || legalBid >= estimatedValue) {
+    return 0;
+  }
+  return Math.round((1 - legalBid / estimatedValue) * 100);
+}
+
 function dateInputValue(value) {
   return value ? String(value).slice(0, 10) : "";
 }

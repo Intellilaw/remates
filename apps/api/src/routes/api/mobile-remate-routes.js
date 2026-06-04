@@ -123,7 +123,7 @@ function buildPropertyFromInput(input, db) {
     zoneLabel,
     estimatedValueMxn,
     legalBidMxn,
-    discountPct: Number(input.discountPct || computeDiscountPct(estimatedValueMxn, legalBidMxn)),
+    discountPct: computeDiscountPct(estimatedValueMxn, legalBidMxn),
     auctionRound: sanitizeText(input.auctionRound || "PRIMERA", 40),
     shortDescription: requiredText(input.shortDescription, "Descripción", 240),
     fullAddress,

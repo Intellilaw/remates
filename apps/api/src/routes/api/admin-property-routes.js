@@ -53,7 +53,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
           zoneLabel,
           estimatedValueMxn,
           legalBidMxn,
-          discountPct: Number(body.discountPct || computeDiscountPct(estimatedValueMxn, legalBidMxn)),
+          discountPct: computeDiscountPct(estimatedValueMxn, legalBidMxn),
           auctionRound: sanitizeText(body.auctionRound || "PRIMERA", 40),
           shortDescription: requiredText(body.shortDescription, "Descripción", 240),
           fullAddress,
@@ -99,15 +99,17 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
         }
         const before = structuredClone(property);
         const beforeLocationKey = locationImageKey(property);
+        const estimatedValueMxn = body.estimatedValueMxn !== undefined ? Number(body.estimatedValueMxn || 0) : property.estimatedValueMxn;
+        const legalBidMxn = body.legalBidMxn !== undefined ? Number(body.legalBidMxn || 0) : property.legalBidMxn;
         Object.assign(property, {
           title: body.title ? sanitizeText(body.title, 120) : property.title,
           state: body.state ? sanitizeText(body.state, 80) : property.state,
           city: body.city ? sanitizeText(body.city, 80) : property.city,
           zoneLabel: body.zoneLabel ? sanitizeText(body.zoneLabel, 120) : property.zoneLabel,
-          estimatedValueMxn: body.estimatedValueMxn !== undefined ? Number(body.estimatedValueMxn || 0) : property.estimatedValueMxn,
+          estimatedValueMxn,
           shortDescription: body.shortDescription ? sanitizeText(body.shortDescription, 240) : property.shortDescription,
-          legalBidMxn: body.legalBidMxn !== undefined ? Number(body.legalBidMxn || 0) : property.legalBidMxn,
-          discountPct: body.discountPct !== undefined ? Number(body.discountPct || 0) : property.discountPct,
+          legalBidMxn,
+          discountPct: computeDiscountPct(estimatedValueMxn, legalBidMxn),
           auctionRound: body.auctionRound ? sanitizeText(body.auctionRound, 40) : property.auctionRound,
           auctionDate: body.auctionDate || property.auctionDate,
           auctionTime: body.auctionTime ? sanitizeText(body.auctionTime, 20) : property.auctionTime,

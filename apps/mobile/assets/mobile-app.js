@@ -267,18 +267,12 @@ function renderReview() {
             <span>Título</span>
             <input name="title" value="${fieldValue(state.draft.title)}" required />
           </label>
-          <div class="two-col">
-            <label>
-              <span>Descuento %</span>
-              <input name="discountPct" type="number" inputmode="numeric" min="0" max="99" step="1" value="${Number(state.draft.discountPct || 0)}" required />
-            </label>
-            <label>
-              <span>Almoneda</span>
-              <select name="auctionRound">
-                ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}" ${state.draft.auctionRound === item ? "selected" : ""}>${auctionRoundLabel(item)}</option>`).join("")}
-              </select>
-            </label>
-          </div>
+          <label>
+            <span>Almoneda</span>
+            <select name="auctionRound">
+              ${["PRIMERA", "SEGUNDA", "POSTERIOR"].map((item) => `<option value="${item}" ${state.draft.auctionRound === item ? "selected" : ""}>${auctionRoundLabel(item)}</option>`).join("")}
+            </select>
+          </label>
           <label>
             <span>Descripción</span>
             <textarea name="shortDescription" rows="3" required>${fieldValue(state.draft.shortDescription)}</textarea>
@@ -421,7 +415,6 @@ function formToDraft(form) {
     zoneLabel: location.zoneLabel,
     estimatedValueMxn: parseCurrencyValue(formData.get("estimatedValueMxn")),
     legalBidMxn: parseCurrencyValue(formData.get("legalBidMxn")),
-    discountPct: Number(formData.get("discountPct") || 0),
     auctionRound: String(formData.get("auctionRound") || "PRIMERA"),
     shortDescription: String(formData.get("shortDescription") || ""),
     fullAddress: String(formData.get("fullAddress") || ""),
@@ -574,7 +567,6 @@ document.addEventListener("click", (event) => {
     const legalBid = Math.round((estimated * 2) / 3);
     if (legalBid) {
       form.querySelector('[name="legalBidMxn"]').value = formatCurrencyInputValue(legalBid);
-      form.querySelector('[name="discountPct"]').value = "33";
       state.draft = { ...state.draft, ...formToDraft(form), legalBidWasComputed: true };
       toast(`Postura recalculada: ${money(legalBid)}`);
     }

@@ -137,12 +137,10 @@ document.addEventListener("click", async (event) => {
     if (target.dataset.action === "recalculate-property-bid") {
       const form = target.closest("form");
       const legalBidInput = form?.querySelector('[name="legalBidMxn"]');
-      const discountInput = form?.querySelector('[name="discountPct"]');
       const estimated = parseCurrencyValue(form?.querySelector('[name="estimatedValueMxn"]')?.value || 0);
       const legalBid = Math.round((estimated * 2) / 3);
-      if (legalBid && legalBidInput && discountInput) {
+      if (legalBid && legalBidInput) {
         legalBidInput.value = formatCurrencyInputValue(legalBid);
-        discountInput.value = "33";
         toast(`Postura recalculada: ${money(legalBid)}`);
       }
     }
@@ -298,7 +296,6 @@ document.addEventListener("submit", async (event) => {
           zoneLabel: location.zoneLabel,
           estimatedValueMxn: parseCurrencyValue(formData.get("estimatedValueMxn")),
           legalBidMxn: parseCurrencyValue(formData.get("legalBidMxn")),
-          discountPct: Number(formData.get("discountPct")),
           auctionRound: formData.get("auctionRound"),
           shortDescription: formData.get("shortDescription"),
           auctionDate: formData.get("auctionDate"),
@@ -341,9 +338,9 @@ document.addEventListener("submit", async (event) => {
       if (formData.has("fullAddress") && !formData.has("state") && !formData.has("city") && !formData.has("zoneLabel")) {
         Object.assign(body, deriveLocationParts(formData.get("fullAddress")));
       }
-      ["estimatedValueMxn", "legalBidMxn", "discountPct"].forEach((field) => {
+      ["estimatedValueMxn", "legalBidMxn"].forEach((field) => {
         if (formData.has(field)) {
-          body[field] = field === "discountPct" ? Number(formData.get(field)) : parseCurrencyValue(formData.get(field));
+          body[field] = parseCurrencyValue(formData.get(field));
         }
       });
       await api(`/api/admin/properties/${formData.get("propertyId")}`, {

@@ -52,7 +52,7 @@ export function getBaseProperty(property) {
     zoneLabel: property.zoneLabel,
     estimatedValueMxn: property.estimatedValueMxn,
     legalBidMxn: property.legalBidMxn,
-    discountPct: property.discountPct,
+    discountPct: computeDiscountPct(property.estimatedValueMxn, property.legalBidMxn),
     auctionRound: property.auctionRound,
     shortDescription: property.shortDescription,
     publicStatus: property.publicStatus,
@@ -63,6 +63,15 @@ export function getBaseProperty(property) {
     locationImage: exposeLocationImage(property.locationImage || buildFallbackLocationImage(property), property),
     publishedAt: property.publishedAt
   };
+}
+
+function computeDiscountPct(estimatedValueMxn, legalBidMxn) {
+  const estimatedValue = Number(estimatedValueMxn || 0);
+  const legalBid = Number(legalBidMxn || 0);
+  if (!estimatedValue || !legalBid || legalBid >= estimatedValue) {
+    return 0;
+  }
+  return Math.round((1 - legalBid / estimatedValue) * 100);
 }
 
 export function getFullProperty(property) {
