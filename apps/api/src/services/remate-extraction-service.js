@@ -54,11 +54,11 @@ const REMATE_EXTRACTION_SCHEMA = {
     legalBidWasComputed: { type: "boolean" },
     auctionDate: {
       type: ["string", "null"],
-      description: "Fecha del remate en formato YYYY-MM-DD."
+      description: "Fecha de la subasta en formato YYYY-MM-DD."
     },
     auctionTime: {
       type: ["string", "null"],
-      description: "Hora del remate si aparece en el edicto, en formato HH:mm cuando sea posible."
+      description: "Hora de la subasta si aparece en el edicto, en formato HH:mm cuando sea posible."
     },
     fullAddress: { type: ["string", "null"] },
     state: { type: ["string", "null"] },
@@ -133,14 +133,14 @@ async function extractWithOpenAI({ imageDataUrl, textHint }) {
             {
               type: "input_text",
               text: [
-                "Eres un extractor de datos de edictos de remate judicial en México.",
+                "Eres un extractor de datos de edictos de subasta judicial en México.",
                 "Devuelve solo datos encontrados o inferidos con alta cautela.",
                 "La postura legal debe ser el monto expresamente indicado; si no aparece, calcula dos terceras partes del valor de avalúo y marca legalBidWasComputed=true.",
                 "Normaliza montos a numeros MXN sin comas ni simbolos.",
                 "Normaliza fechas a YYYY-MM-DD y horas a HH:mm si aparecen.",
                 `La fecha actual del sistema es ${currentDate}; el ano actual es ${currentYear}.`,
-                `Si el edicto dice "ano en curso", "presente ano" o solo muestra dia y mes sin ano, usa ${currentYear} como ano del remate.`,
-                `Si aparece un ano anterior a ${currentYear} cerca de la fecha del remate, usalo solo si el edicto indica expresamente que el remate es de ese ano; de lo contrario usa ${currentYear}.`,
+                `Si el edicto dice "ano en curso", "presente ano" o solo muestra dia y mes sin ano, usa ${currentYear} como ano de la subasta.`,
+                `Si aparece un ano anterior a ${currentYear} cerca de la fecha de la subasta, usalo solo si el edicto indica expresamente que la subasta es de ese ano; de lo contrario usa ${currentYear}.`,
                 "No inventes juzgado, direccion ni fecha si no son legibles."
               ].join(" ")
             }
@@ -152,7 +152,7 @@ async function extractWithOpenAI({ imageDataUrl, textHint }) {
             {
               type: "input_text",
               text: [
-                "Extrae: juzgado del remate, valor de avalúo, postura legal, fecha del remate y dirección del inmueble.",
+                "Extrae: juzgado de la subasta, valor de avalúo, postura legal, fecha de la subasta y dirección del inmueble.",
                 "Tambien sugiere titulo, estado, ciudad, colonia y descripcion corta para publicar el inmueble.",
                 textHint ? `Nota del usuario: ${sanitizeText(textHint, 1000)}` : ""
               ].filter(Boolean).join(" ")
@@ -185,7 +185,7 @@ async function extractWithOpenAI({ imageDataUrl, textHint }) {
   }
 
   if (!response.ok) {
-    const message = payload?.error?.message || payloadText || "No fue posible extraer la información del remate";
+    const message = payload?.error?.message || payloadText || "No fue posible extraer la información de la subasta";
     throw new Error(message);
   }
 
@@ -455,7 +455,7 @@ function findDate(text) {
 }
 
 function findTime(text) {
-  const match = text.match(/(?:a\s+las|hora(?:\s+del\s+remate)?|remate\s+a\s+las)\s+(\d{1,2})(?::(\d{2}))?/iu);
+  const match = text.match(/(?:a\s+las|hora(?:\s+de(?:l| la)\s+(?:remate|subasta))?|(?:remate|subasta)\s+a\s+las)\s+(\d{1,2})(?::(\d{2}))?/iu);
   return match ? normalizeTime(`${match[1]}:${match[2] || "00"}`) : null;
 }
 

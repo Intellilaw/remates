@@ -168,7 +168,7 @@ output "cloudfront_domain_name" {
 
 output "vercel_dns_record_for_app" {
   value = {
-    name  = "remates"
+    name  = "subastas"
     type  = "CNAME"
     value = aws_cloudfront_distribution.frontend.domain_name
   }

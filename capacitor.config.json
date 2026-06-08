@@ -1,6 +1,6 @@
 {
   "appId": "com.intellilaw.remates",
-  "appName": "Intellilaw Remates",
+  "appName": "Intellilaw Subastas",
   "webDir": "apps/mobile",
   "server": {
     "androidScheme": "https"

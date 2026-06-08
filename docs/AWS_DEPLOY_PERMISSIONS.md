@@ -1,6 +1,6 @@
 # AWS deploy permissions
 
-The `Intellilaw-deploy` principal must be able to provision and update the production stack for `remates.legalflow.solutions`.
+The `Intellilaw-deploy` principal must be able to provision and update the production stack for `subastas.legalflow.solutions`.
 
 For the initial infrastructure creation, the simplest operational path is to attach `AdministratorAccess` temporarily, run Terraform, then replace it with a tighter deployment policy once resources exist.
 

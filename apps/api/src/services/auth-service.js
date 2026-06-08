@@ -98,7 +98,7 @@ export function socialDemoLogin(db, provider) {
     throw new Error("Proveedor social no soportado");
   }
 
-  const email = `${normalizedProvider}.demo@remates.mx`;
+  const email = `${normalizedProvider}.demo@subastas.mx`;
   let user = db.users.find((candidate) => candidate.email === email);
 
   if (!user) {

@@ -9,8 +9,8 @@ function renderTopbar() {
     ? `<div class="user-greeting" aria-label="Usuario conectado"><span>${escapeHtml(welcomeLabel(state.me))}</span><strong>${escapeHtml(firstName(state.me))}</strong></div>`
     : "";
   const brand = `
-    <a class="brand" href="/" aria-label="Remates Inmobiliarios México">
-      <img class="brand__logo" src="/assets/remates-logo.png" alt="Remates Inmobiliarios México by LegalFlow" />
+    <a class="brand" href="/" aria-label="Subastas inmobiliarias México">
+      <img class="brand__logo" src="/assets/subastas-logo.png" alt="Subastas inmobiliarias México by LegalFlow" />
     </a>
   `;
 
@@ -46,8 +46,8 @@ function renderTopbar() {
         <div class="topbar__actions">
           ${userGreeting}
           <nav class="nav" aria-label="Navegación principal">
-            <button data-action="scroll" data-target="#listings">Inmuebles en remate</button>
-            <button data-action="scroll" data-target="#about-remates">¿Qué son los remates?</button>
+            <button data-action="scroll" data-target="#listings">Inmuebles en subasta</button>
+            <button data-action="scroll" data-target="#about-subastas">¿Qué son las subastas?</button>
             ${accountActions}
             ${state.me ? `<button class="ghost" data-action="logout">Salir</button>` : ""}
           </nav>
@@ -62,11 +62,11 @@ function renderHomeHero() {
     <section class="hero shell">
       <div class="hero__grid">
         <div class="hero__panel">
-          <h1>Remates en CDMX, explicados paso a paso.</h1>
-          <p>Sabemos que un remate judicial puede generar dudas. Por eso mostramos qué información es pública, qué se desbloquea con cada etapa y qué costos debes considerar antes de tomar una decisión.</p>
+          <h1>Subastas en CDMX, explicadas paso a paso.</h1>
+          <p>Sabemos que una subasta judicial puede generar dudas. Por eso mostramos qué información es pública, qué se desbloquea con cada etapa y qué costos debes considerar antes de tomar una decisión.</p>
           <div class="hero__actions">
-            <button class="primary" data-action="scroll" data-target="#listings">Ver remates en CDMX</button>
-            <button class="secondary" data-action="scroll" data-target="#about-remates">Qué es un remate</button>
+            <button class="primary" data-action="scroll" data-target="#listings">Ver subastas en CDMX</button>
+            <button class="secondary" data-action="scroll" data-target="#about-subastas">Qué es una subasta</button>
           </div>
           <div class="hero__stats">
             <div class="stat"><strong>Antes de pagar</strong><span>ves avalúo, postura legal, almoneda y fecha</span></div>
@@ -143,12 +143,12 @@ function renderCatalogContent(title = "Catálogo", copy = CATALOG_COPY) {
 
 function renderExplainer() {
   return `
-    <section class="section shell" id="about-remates">
+    <section class="section shell" id="about-subastas">
       <div class="section-head">
         <div>
-          <div class="kicker">Qué son los remates</div>
+          <div class="kicker">Qué son las subastas</div>
           <h2 class="section-title">Una oportunidad patrimonial con reglas judiciales, no una compraventa común.</h2>
-          <p class="section-copy">Un remate inmobiliario es una subasta ordenada dentro de un procedimiento judicial. Puede permitir adquirir por debajo del valor comercial, pero exige entender la almoneda, la postura legal, la adjudicación, la entrega y los gastos posteriores.</p>
+          <p class="section-copy">Una subasta inmobiliaria es una venta ordenada dentro de un procedimiento judicial. Puede permitir adquirir por debajo del valor comercial, pero exige entender la almoneda, la postura legal, la adjudicación, la entrega y los gastos posteriores.</p>
         </div>
       </div>
       <div class="section-card explain-grid">
@@ -179,7 +179,7 @@ function renderExplainer() {
         <div class="clarity-card clarity-card--blue">
           <div class="kicker">Adjudicación judicial</div>
           <h3>El inmueble se transmite por resolución de un juez.</h3>
-          <p>Cuando el remate concluye con adjudicación, el juez reconoce al adjudicatario y ordena las actuaciones necesarias para formalizar la transmisión, cancelar gravámenes judicialmente procedentes y, cuando corresponde, entregar la posesión.</p>
+          <p>Cuando la subasta concluye con adjudicación, el juez reconoce al adjudicatario y ordena las actuaciones necesarias para formalizar la transmisión, cancelar gravámenes judicialmente procedentes y, cuando corresponde, entregar la posesión.</p>
           <p>Esto da mayor certeza frente a cargas previas sobre el inmueble, porque la adquisición deriva de una orden judicial y no de una negociación privada.</p>
         </div>
         <div class="clarity-card">
@@ -208,12 +208,12 @@ function renderEducation() {
           <div>
             <div class="play-badge">▶</div>
             <h3>Guía del proceso</h3>
-            <p>Conoce los pasos clave para evaluar un remate, preparar la audiencia, entender la adjudicación y anticipar los costos posteriores.</p>
+            <p>Conoce los pasos clave para evaluar una subasta, preparar la audiencia, entender la adjudicación y anticipar los costos posteriores.</p>
           </div>
         </div>
         <div>
           <div class="kicker">Información esencial</div>
-          <h3>${escapeHtml(state.education?.title || "Qué es un remate inmobiliario")}</h3>
+          <h3>${escapeHtml(state.education?.title || "Qué es una subasta inmobiliaria")}</h3>
           <p>${escapeHtml(state.education?.bodyMarkdown || "")}</p>
           <div class="explain-points">
             ${STAGES.map((stage) => `

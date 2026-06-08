@@ -29,7 +29,7 @@ variable "environment" {
 
 variable "domain_name" {
   type    = string
-  default = "remates.legalflow.solutions"
+  default = "subastas.legalflow.solutions"
 }
 
 variable "container_image" {

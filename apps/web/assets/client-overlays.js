@@ -93,7 +93,7 @@ function renderPublicPropertyDetails(relatedCase, showDate) {
 
   return `
     <div class="section-card" style="margin-top:16px;">
-      <div class="kicker">Datos públicos del remate</div>
+      <div class="kicker">Datos públicos de la subasta</div>
       <p><strong>Fecha de subasta:</strong> ${showDate ? escapeHtml(formatDate(state.propertyDetail.auctionDate)) : "Por confirmar"}</p>
       <p><strong>Hora de subasta:</strong> ${escapeHtml(state.propertyDetail.auctionTime || "Por confirmar")}</p>
       <p><strong>Postura legal:</strong> ${formatMoney(state.propertyDetail.legalBidMxn)}</p>
@@ -231,7 +231,7 @@ function renderFooter() {
     <footer class="footer shell">
       <div class="footer-simple">
         <div class="footer-owner">
-          <img src="/assets/remates-logo.png" alt="Remates Inmobiliarios México by LegalFlow" />
+          <img src="/assets/subastas-logo.png" alt="Subastas inmobiliarias México by LegalFlow" />
           <span>Esta app pertenece a LegalFlow.</span>
         </div>
         <a class="footer-whatsapp" href="${WHATSAPP_LINK}" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp al 56 2424 0001">

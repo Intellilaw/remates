@@ -1,7 +1,7 @@
 aws_region = "us-east-1"
 project_name = "intellilaw-remates"
 environment = "prod"
-domain_name = "remates.legalflow.solutions"
+domain_name = "subastas.legalflow.solutions"
 
 # Keep the first apply at 0 until the ECR image has been pushed.
 service_desired_count = 0

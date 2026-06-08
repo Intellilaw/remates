@@ -27,7 +27,7 @@ const serviceStages = [
 const demoUsers = [
   {
     id: "usr_client_demo",
-    email: "cliente@remates.mx",
+    email: "cliente@subastas.mx",
     password: "Demo123!",
     fullName: "Mariana Robles",
     gender: "FEMALE",
@@ -37,7 +37,7 @@ const demoUsers = [
   },
   {
     id: "usr_sales_demo",
-    email: "asesor@remates.mx",
+    email: "asesor@subastas.mx",
     password: "Demo123!",
     fullName: "Javier Mendoza",
     gender: "MALE",
@@ -47,7 +47,7 @@ const demoUsers = [
   },
   {
     id: "usr_legal_demo",
-    email: "legal@remates.mx",
+    email: "legal@subastas.mx",
     password: "Demo123!",
     fullName: "Patricia Salas",
     gender: "FEMALE",
@@ -120,9 +120,9 @@ export function createSeedData() {
     serviceStages,
     users,
     authIdentities: [
-      { id: randomId("auth"), userId: "usr_client_demo", provider: "email", providerSubject: "cliente@remates.mx" },
-      { id: randomId("auth"), userId: "usr_sales_demo", provider: "email", providerSubject: "asesor@remates.mx" },
-      { id: randomId("auth"), userId: "usr_legal_demo", provider: "email", providerSubject: "legal@remates.mx" },
+      { id: randomId("auth"), userId: "usr_client_demo", provider: "email", providerSubject: "cliente@subastas.mx" },
+      { id: randomId("auth"), userId: "usr_sales_demo", provider: "email", providerSubject: "asesor@subastas.mx" },
+      { id: randomId("auth"), userId: "usr_legal_demo", provider: "email", providerSubject: "legal@subastas.mx" },
       { id: randomId("auth"), userId: "usr_admin_demo", provider: "email", providerSubject: "e.rusconi@rusconi.law" }
     ],
     properties: [testProperty],
@@ -139,8 +139,8 @@ export function createSeedData() {
         {
           id: "cms_education",
           contentKey: "education",
-          title: "Qué es un remate inmobiliario y cómo lo acompañamos en CDMX",
-          bodyMarkdown: "Un remate inmobiliario es una subasta derivada de un procedimiento judicial. Si el inmueble se adjudica, la transmisión deriva de una resolución del juez, quien puede ordenar la cancelación de gravámenes procedentes y la entrega al adjudicatario. Aun así, la adjudicación no necesariamente elimina adeudos de agua, predial, energía eléctrica o cuotas de mantenimiento, por lo que deben revisarse y presupuestarse por separado.",
+          title: "Qué es una subasta inmobiliaria y cómo la acompañamos en CDMX",
+          bodyMarkdown: "Una subasta inmobiliaria es una venta judicial derivada de un procedimiento. Si el inmueble se adjudica, la transmisión deriva de una resolución del juez, quien puede ordenar la cancelación de gravámenes procedentes y la entrega al adjudicatario. Aun así, la adjudicación no necesariamente elimina adeudos de agua, predial, energía eléctrica o cuotas de mantenimiento, por lo que deben revisarse y presupuestarse por separado.",
           videoS3Key: "",
           isPublished: true
         }

@@ -1,12 +1,12 @@
-﻿# Intellilaw Remates
+﻿# Intellilaw Subastas
 
-Primera versión funcional de una plataforma para publicar, vender y operar remates inmobiliarios en México.
+Primera versión funcional de una plataforma para publicar, vender y operar subastas inmobiliarias en México.
 
 Esta entrega incluye:
 - Sitio público con catálogo, detalle limitado y contenido educativo
 - Dashboard de cliente con expedientes, pagos por etapa y mensajería con staff
 - Intranet para operación interna con usuarios, casos, notas, contenido e inmuebles
-- App móvil/PWA para fotografiar edictos, extraer datos de remate, confirmar y publicar inmuebles
+- App móvil/PWA para fotografiar edictos, extraer datos de subasta, confirmar y publicar inmuebles
 - Backend API con RBAC y autorización por fila
 - Esquema PostgreSQL para RDS y configuración base para AWS
 - Datos demo listos para explorar localmente
@@ -16,7 +16,7 @@ Esta entrega incluye:
 ### Frontend
 - `apps/web`: sitio público y dashboard del cliente
 - `apps/admin`: intranet del equipo interno
-- `apps/mobile`: captura móvil para alta automática de remates desde fotografía
+- `apps/mobile`: captura móvil para alta automática de subastas desde fotografía
 - En esta preview las apps se sirven desde el backend para simplificar la ejecución local.
 - En AWS se sirven detrás del backend en ECS para mantener el contrato actual de rutas y API.
 
@@ -61,15 +61,15 @@ node apps/api/src/data/store.js --reset
 ## Credenciales demo
 
 ### Cliente
-- `cliente@remates.mx`
+- `cliente@subastas.mx`
 - `Demo123!`
 
 ### Ventas
-- `asesor@remates.mx`
+- `asesor@subastas.mx`
 - `Demo123!`
 
 ### Legal
-- `legal@remates.mx`
+- `legal@subastas.mx`
 - `Demo123!`
 
 ### Admin
@@ -105,7 +105,7 @@ node apps/api/src/data/store.js --reset
 - Publicar / destacar inmuebles
 - Editar contenido educativo
 
-### Captura móvil de remates
+### Captura móvil de subastas
 - Login con cuenta interna `CONTENT`, `LEGAL` o `ADMIN`
 - Carga de foto desde cámara o galería
 - Extracción por visión usando `OPENAI_API_KEY` y `OPENAI_EXTRACTION_MODEL`

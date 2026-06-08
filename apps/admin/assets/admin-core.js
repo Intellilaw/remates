@@ -94,7 +94,7 @@ function slugify(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 120) || "remate-inmobiliario";
+    .slice(0, 120) || "subasta-inmobiliaria";
 }
 
 function getEventElementTarget(event) {

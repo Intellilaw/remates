@@ -2,6 +2,7 @@ import http from "node:http";
 import https from "node:https";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { normalizeBrandTree } from "./brand-text.js";
 import { buildFallbackLocationImage } from "../services/property-location-image-service.js";
 import { normalizeTextTree } from "./text-normalization.js";
 
@@ -57,7 +58,7 @@ export async function proxyApiRequest(req, res, upstreamBaseUrl) {
             "Content-Type": "application/json; charset=utf-8",
             "Cache-Control": "no-store"
           });
-          res.end(JSON.stringify(overrideResult.payload));
+          res.end(JSON.stringify(normalizeBrandTree(overrideResult.payload)));
         } catch {
           res.writeHead(proxyRes.statusCode || 502, responseHeaders);
           res.end(Buffer.concat(chunks));

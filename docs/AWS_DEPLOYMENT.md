@@ -1,11 +1,11 @@
 # AWS deployment
 
-Target domain: `remates.legalflow.solutions`
+Target domain: `subastas.legalflow.solutions`
 
 ## Architecture
 
 - Vercel remains the DNS host for `legalflow.solutions`.
-- CloudFront serves `remates.legalflow.solutions`.
+- CloudFront serves `subastas.legalflow.solutions`.
 - S3 hosts the public web app, admin app, and mobile capture app.
 - CloudFront routes `/api/*` to the Application Load Balancer.
 - ECS Fargate runs the Node API in private subnets.
@@ -20,8 +20,8 @@ Target domain: `remates.legalflow.solutions`
 1. Install AWS CLI, Terraform and Docker locally.
 2. Authenticate AWS CLI with the target AWS account.
 3. Copy `infra/terraform/terraform.tfvars.example` to `infra/terraform/terraform.tfvars` and fill secrets.
-   - Set `openai_api_key` so the mobile capture app can extract remate data from photos.
-   - Set `google_maps_api_key` so published remates can use Google Street View / Static Maps before falling back to the local reference image.
+   - Set `openai_api_key` so the mobile capture app can extract subasta data from photos.
+   - Set `google_maps_api_key` so published subastas can use Google Street View / Static Maps before falling back to the local reference image.
    - Keep `openai_extraction_model = "gpt-4.1-mini"` unless you intentionally test another vision-capable Responses API model.
 4. Run the first Terraform apply with `service_desired_count = 0`.
 
@@ -53,7 +53,7 @@ aws s3 sync apps/mobile "s3://<frontend_bucket>/mobile" --delete
 8. Add the app DNS record shown in `vercel_dns_record_for_app` to Vercel DNS:
 
 ```text
-Name: remates
+Name: subastas
 Type: CNAME
 Value: <cloudfront_domain_name output>
 ```

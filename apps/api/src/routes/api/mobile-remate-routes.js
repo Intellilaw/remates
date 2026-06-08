@@ -10,7 +10,7 @@ import { randomId, sanitizeText } from "../../utils/security.js";
 const REMATE_CAPTURE_ROLES = STAFF_ACCESS_ROLES;
 
 export async function handleMobileRemateRoutes(req, res, pathname, { db, actor }) {
-  if (pathname === "/api/mobile/remates/extract" && req.method === "POST") {
+  if ((pathname === "/api/mobile/subastas/extract" || pathname === "/api/mobile/remates/extract") && req.method === "POST") {
     if (!requireRoles(res, actor, REMATE_CAPTURE_ROLES)) {
       return;
     }
@@ -28,7 +28,7 @@ export async function handleMobileRemateRoutes(req, res, pathname, { db, actor }
     }
   }
 
-  if (pathname === "/api/mobile/remates/publish" && req.method === "POST") {
+  if ((pathname === "/api/mobile/subastas/publish" || pathname === "/api/mobile/remates/publish") && req.method === "POST") {
     if (!requireRoles(res, actor, REMATE_CAPTURE_ROLES)) {
       return;
     }
@@ -80,7 +80,7 @@ function buildDraftFromExtraction(extraction, db) {
     riskNotes: "Revisar expediente, adeudos y estatus de posesión antes de recomendar participación.",
     publicStatus: "PUBLISHED",
     featured: true,
-    tags: ["Remate"],
+    tags: ["Subasta"],
     heroTone: "cobalt",
     imageAccent: "#2563eb",
     locationImage: null
@@ -96,7 +96,7 @@ function buildPropertyFromInput(input, db) {
 
   const title = requiredText(input.title, "Título", 120);
   const fullAddress = requiredText(input.fullAddress, "Dirección del inmueble", 240);
-  const courtName = requiredText(input.courtName, "Juzgado del remate", 180);
+  const courtName = requiredText(input.courtName, "Juzgado de la subasta", 180);
   const auctionDate = sanitizeText(input.auctionDate || "", 20);
   const state = requiredText(normalizeStateName(input.state), "Estado", 80);
   const city = requiredText(input.city, "Ciudad o alcaldía", 80);
@@ -110,7 +110,7 @@ function buildPropertyFromInput(input, db) {
     throw new Error("Postura legal obligatoria");
   }
   if (!auctionDate) {
-    throw new Error("Fecha del remate obligatoria");
+    throw new Error("Fecha de la subasta obligatoria");
   }
 
   return {
@@ -135,7 +135,7 @@ function buildPropertyFromInput(input, db) {
     riskNotes: sanitizeText(input.riskNotes || "", 500),
     publicStatus: "PUBLISHED",
     featured: true,
-    tags: Array.isArray(input.tags) ? input.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Remate"],
+    tags: Array.isArray(input.tags) ? input.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Subasta"],
     heroTone: input.heroTone || "cobalt",
     imageAccent: input.imageAccent || "#2563eb",
     locationImage: null,
@@ -173,25 +173,25 @@ function normalizeStateName(value) {
 
 function titleFromAddress(fullAddress, city, zoneLabel) {
   if (zoneLabel) {
-    return `Remate en ${zoneLabel}`;
+    return `Subasta en ${zoneLabel}`;
   }
   if (city) {
-    return `Remate en ${city}`;
+    return `Subasta en ${city}`;
   }
   const addressPart = sanitizeText(fullAddress || "", 80).split(",")[0];
-  return addressPart ? `Remate en ${addressPart}` : "Remate inmobiliario";
+  return addressPart ? `Subasta en ${addressPart}` : "Subasta inmobiliaria";
 }
 
 function descriptionFromValues(estimatedValueMxn, legalBidMxn) {
   if (estimatedValueMxn && legalBidMxn) {
-    return "Remate judicial con avalúo, postura legal y fecha confirmados desde edicto.";
+    return "Subasta judicial con avalúo, postura legal y fecha confirmados desde edicto.";
   }
-  return "Remate judicial pendiente de confirmacion documental.";
+  return "Subasta judicial pendiente de confirmacion documental.";
 }
 
 function uniqueSlug(baseSlug, properties) {
   const used = new Set(properties.map((property) => property.slug));
-  const base = baseSlug || "remate-inmobiliario";
+  const base = baseSlug || "subasta-inmobiliaria";
   if (!used.has(base)) {
     return base;
   }
@@ -213,5 +213,5 @@ function slugify(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return slug || "remate-inmobiliario";
+  return slug || "subasta-inmobiliaria";
 }

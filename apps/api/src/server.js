@@ -53,7 +53,7 @@ export const server = http.createServer(requestHandler);
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   server.listen(config.port, () => {
-    process.stdout.write(`Remates platform running at http://localhost:${config.port}
+    process.stdout.write(`Subastas platform running at http://localhost:${config.port}
 `);
   });
 }

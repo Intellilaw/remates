@@ -26,7 +26,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
         const legalBidMxn = Number(body.legalBidMxn || (estimatedValueMxn ? computeLegalBid(estimatedValueMxn) : 0));
         const title = requiredText(body.title, "Título", 120);
         const fullAddress = requiredText(body.fullAddress, "Dirección del inmueble", 240);
-        const courtName = requiredText(body.courtName, "Juzgado del remate", 180);
+        const courtName = requiredText(body.courtName, "Juzgado de la subasta", 180);
         const auctionDate = sanitizeText(body.auctionDate || "", 20);
         const state = requiredText(normalizeStateName(body.state), "Estado", 80);
         const city = requiredText(body.city, "Ciudad o alcaldía", 80);
@@ -40,7 +40,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
           throw new Error("Postura legal obligatoria");
         }
         if (!auctionDate) {
-          throw new Error("Fecha del remate obligatoria");
+          throw new Error("Fecha de la subasta obligatoria");
         }
 
         const property = {
@@ -65,7 +65,7 @@ export async function handleAdminPropertyRoutes(req, res, pathname, { db, actor 
           riskNotes: sanitizeText(body.riskNotes || "", 500),
           publicStatus,
           featured: Boolean(body.featured),
-          tags: Array.isArray(body.tags) ? body.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Remate"],
+          tags: Array.isArray(body.tags) ? body.tags.slice(0, 5).map((tag) => sanitizeText(tag, 40)).filter(Boolean) : ["Subasta"],
           heroTone: body.heroTone || "cobalt",
           imageAccent: body.imageAccent || "#2563eb",
           locationImage: null,
@@ -223,7 +223,7 @@ function normalizeStateName(value) {
 
 function uniqueSlug(baseSlug, properties) {
   const used = new Set(properties.map((property) => property.slug));
-  const base = baseSlug || "remate-inmobiliario";
+  const base = baseSlug || "subasta-inmobiliaria";
   if (!used.has(base)) {
     return base;
   }
@@ -245,5 +245,5 @@ function slugify(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return slug || "remate-inmobiliario";
+  return slug || "subasta-inmobiliaria";
 }

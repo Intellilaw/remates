@@ -1,7 +1,7 @@
 const app = document.querySelector("#app");
 const STAFF_ROLES = ["SALES", "LEGAL", "FINANCE", "CONTENT", "ADMIN"];
 const tokenKey = "remates_staff_token";
-const nativeApiBaseUrl = document.querySelector('meta[name="api-base-url"]')?.content || "https://remates.legalflow.solutions";
+const nativeApiBaseUrl = document.querySelector('meta[name="api-base-url"]')?.content || "https://subastas.legalflow.solutions";
 const isNativeShell = Boolean(window.Capacitor?.isNativePlatform?.()) || window.location.protocol === "capacitor:";
 const logoSrc = "assets/legalflow-logo.png";
 const APP_VERSION = window.REMATES_APP_VERSION_LABEL || "Versión local";
@@ -103,7 +103,7 @@ async function loadSession() {
   const payload = await api("/api/me");
   const hasAccess = payload.user.roles.some((role) => STAFF_ROLES.includes(role));
   if (!hasAccess) {
-    throw new Error("Esta cuenta no puede publicar remates");
+    throw new Error("Esta cuenta no puede publicar subastas");
   }
   state.me = payload.user;
 }
@@ -131,7 +131,7 @@ function renderLogin() {
         <div class="brand">
           <img src="${logoSrc}" alt="LegalFlow" />
           <div>
-            <div class="brand__name">Intellilaw Remates</div>
+            <div class="brand__name">Intellilaw Subastas</div>
             <div class="brand__tag">Captura móvil</div>
           </div>
         </div>
@@ -160,7 +160,7 @@ function renderShell() {
         <div class="brand">
           <img src="${logoSrc}" alt="LegalFlow" />
           <div>
-            <div class="brand__name">Captura de remates</div>
+            <div class="brand__name">Captura de subastas</div>
             <div class="brand__tag">${escapeHtml(state.me.fullName)}</div>
           </div>
         </div>
@@ -179,7 +179,7 @@ function renderCapture() {
       <section class="mobile-panel">
         <div class="section-head">
           <div>
-            <div class="kicker">Nuevo remate</div>
+            <div class="kicker">Nueva subasta</div>
             <h1>Edicto fotografiado</h1>
           </div>
           <span class="status-pill">Borrador</span>
@@ -210,7 +210,7 @@ function renderReview() {
         <div class="section-head">
           <div>
             <div class="kicker">Confirmación</div>
-            <h1>${escapeHtml(state.draft.title || "Remate inmobiliario")}</h1>
+            <h1>${escapeHtml(state.draft.title || "Subasta inmobiliaria")}</h1>
           </div>
           <span class="status-pill status-pill--published">Listo</span>
         </div>
@@ -227,9 +227,9 @@ function renderReview() {
       </section>
       <form class="mobile-panel stack" data-form="publish">
         <div class="form-section">
-          <h2>Datos del remate</h2>
+          <h2>Datos de la subasta</h2>
           <label>
-            <span>Juzgado del remate</span>
+            <span>Juzgado de la subasta</span>
             <select name="courtName" required>
               ${renderCourtOptions(state.draft.courtName)}
             </select>
@@ -299,7 +299,7 @@ function renderPublished() {
           <p>${money(state.published.item.legalBidMxn)} de postura legal</p>
         </div>
         <a class="primary text-center" href="${escapeHtml(publicUrl(state.published.publicUrl))}">Abrir publicación</a>
-        <button class="secondary" data-action="new-capture" type="button">Capturar otro remate</button>
+        <button class="secondary" data-action="new-capture" type="button">Capturar otra subasta</button>
       </section>
     </main>
   `;
@@ -424,7 +424,7 @@ function formToDraft(form) {
     legalSummary: String(formData.get("legalSummary") || ""),
     riskNotes: String(formData.get("riskNotes") || ""),
     featured: true,
-    tags: ["Remate"]
+    tags: ["Subasta"]
   };
 }
 
@@ -472,7 +472,7 @@ function slugify(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 120) || "remate-inmobiliario";
+    .slice(0, 120) || "subasta-inmobiliaria";
 }
 
 function publicUrl(path) {
@@ -609,7 +609,7 @@ document.addEventListener("submit", async (event) => {
         throw new Error("Selecciona una foto del edicto");
       }
       const imageDataUrl = await imageFileToDataUrl(file);
-      const payload = await api("/api/mobile/remates/extract", {
+      const payload = await api("/api/mobile/subastas/extract", {
         method: "POST",
         body: JSON.stringify({
           imageDataUrl,
@@ -623,14 +623,14 @@ document.addEventListener("submit", async (event) => {
 
     if (formName === "publish") {
       const draft = formToDraft(form);
-      const payload = await api("/api/mobile/remates/publish", {
+      const payload = await api("/api/mobile/subastas/publish", {
         method: "POST",
         body: JSON.stringify({ item: draft })
       });
       state.published = payload;
       state.draft = null;
       state.extraction = null;
-      toast("Remate publicado");
+      toast("Subasta publicada");
     }
   } catch (error) {
     toast(error.message);

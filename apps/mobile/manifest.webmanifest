@@ -1,6 +1,6 @@
 {
-  "name": "Intellilaw Captura de Remates",
-  "short_name": "Remates",
+  "name": "Intellilaw Captura de Subastas",
+  "short_name": "Subastas",
   "start_url": "/mobile",
   "scope": "/mobile/",
   "display": "standalone",

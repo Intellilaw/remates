@@ -1,5 +1,6 @@
 ﻿import fs from "node:fs/promises";
 import path from "node:path";
+import { normalizeBrandTree } from "./brand-text.js";
 import { normalizeTextTree } from "./text-normalization.js";
 
 const MIME_TYPES = {
@@ -20,7 +21,7 @@ export function sendJson(res, statusCode, payload) {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store"
   });
-  res.end(JSON.stringify(normalizeTextTree(payload)));
+  res.end(JSON.stringify(normalizeBrandTree(normalizeTextTree(payload))));
 }
 
 export function sendText(res, statusCode, payload, contentType = "text/plain; charset=utf-8") {

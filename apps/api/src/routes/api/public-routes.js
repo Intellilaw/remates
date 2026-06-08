@@ -160,7 +160,7 @@ export async function handlePublicRoutes(req, res, pathname, { db, actor }) {
         });
         return draft;
       });
-      const user = updated.users.find((item) => item.email === `${String(body.provider || "").toLowerCase()}.demo@remates.mx`);
+      const user = updated.users.find((item) => item.email === `${String(body.provider || "").toLowerCase()}.demo@subastas.mx`);
       return sendJson(res, 200, createAuthResponse(user));
     } catch (error) {
       return badRequest(res, error.message);
@@ -500,7 +500,7 @@ function normalizeSocialProvider(provider) {
 
 function socialDemoProfile(provider) {
   return {
-    email: `${provider}.demo@remates.mx`,
+    email: `${provider}.demo@subastas.mx`,
     fullName: provider === "google" ? "Cliente Google" : "Cliente Facebook",
     phone: "+52 55 0000 0000"
   };

@@ -118,7 +118,7 @@ function renderClientEntitlements(caseItem) {
         <div class="detail-card">
           <div class="kicker">Hora de subasta</div>
           <strong>${property.auctionTime ? escapeHtml(property.auctionTime) : "Pendiente"}</strong>
-          <p>Visible desde la ficha pública cuando viene indicada en el remate.</p>
+          <p>Visible desde la ficha pública cuando viene indicada en la subasta.</p>
       </div>
         <div class="detail-card">
           <div class="kicker">Postura legal</div>

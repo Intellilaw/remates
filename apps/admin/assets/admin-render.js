@@ -413,7 +413,7 @@ function renderPropertyEditForm(property) {
           </label>
         </div>
         <label class="field-label">
-          <span>Juzgado del remate</span>
+          <span>Juzgado de la subasta</span>
           <select name="courtName" required>
             ${renderCourtOptions(property.courtName || "")}
           </select>
@@ -457,9 +457,9 @@ function renderProperties() {
         <div class="panel">
           <form data-form="property-create">
             <div class="form-section">
-              <h3>Datos del remate</h3>
+              <h3>Datos de la subasta</h3>
               <label class="field-label">
-                <span>Juzgado del remate</span>
+                <span>Juzgado de la subasta</span>
                 <select name="courtName" required>
                   <option value="" selected disabled>Selecciona juzgado</option>
                   ${COURT_OPTIONS.map((court) => `<option value="${escapeHtml(court)}">${escapeHtml(court)}</option>`).join("")}
@@ -564,7 +564,7 @@ function renderMain() {
           <div class="brand">
             <div class="brand__logo"><img src="/assets/legalflow-logo.png" alt="LegalFlow" /></div>
             <div>
-              <div class="brand__name">Remates Inmobiliarios México</div>
+              <div class="brand__name">Subastas inmobiliarias México</div>
               <div class="small">Una app de LegalFlow · Panel interno de gestión</div>
             </div>
           </div>

@@ -6,8 +6,8 @@ const GOOGLE_STREET_VIEW_ENDPOINT = "https://maps.googleapis.com/maps/api/street
 const GOOGLE_STREET_VIEW_METADATA_ENDPOINT = "https://maps.googleapis.com/maps/api/streetview/metadata";
 const GOOGLE_STATIC_MAP_ENDPOINT = "https://maps.googleapis.com/maps/api/staticmap";
 
-export const LOCATION_IMAGE_DISCLAIMER = "Imagen obtenida de Google. Puede no corresponder de manera exacta al inmueble rematado.";
-const FALLBACK_IMAGE_DISCLAIMER = "Imagen de referencia generada por la plataforma. Puede no corresponder de manera exacta al inmueble rematado.";
+export const LOCATION_IMAGE_DISCLAIMER = "Imagen obtenida de Google. Puede no corresponder de manera exacta al inmueble subastado.";
+const FALLBACK_IMAGE_DISCLAIMER = "Imagen de referencia generada por la plataforma. Puede no corresponder de manera exacta al inmueble subastado.";
 
 export async function resolveLocationImage(property) {
   if (!config.googleMapsApiKey) {
@@ -162,7 +162,7 @@ function buildStaticMapImage(geocode) {
 }
 
 export function buildFallbackLocationImage(property, reason = "MISSING_LOCATION_IMAGE") {
-  const title = sanitizeText(property.title || "Remate inmobiliario", 90);
+  const title = sanitizeText(property.title || "Subasta inmobiliaria", 90);
   const address = sanitizeText(property.fullAddress || "", 150);
   const location = sanitizeText([property.zoneLabel, property.city, property.state].filter(Boolean).join(", "), 130);
   const label = address || location || "Ubicación por confirmar";
@@ -173,7 +173,7 @@ export function buildFallbackLocationImage(property, reason = "MISSING_LOCATION_
     imageKind: "fallback",
     sourceLabel: "Imagen de referencia",
     imageUrl: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    attribution: "Remates Inmobiliarios México",
+    attribution: "Subastas inmobiliarias México",
     disclaimer: FALLBACK_IMAGE_DISCLAIMER,
     matchStatus: "FALLBACK",
     geocodeLocationType: "",

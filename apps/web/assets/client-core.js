@@ -106,7 +106,7 @@ const state = {
 };
 
 const app = document.querySelector("#app");
-const WHATSAPP_LINK = "https://wa.me/525624240001?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20remates%20inmobiliarios.";
+const WHATSAPP_LINK = "https://wa.me/525624240001?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20subastas%20inmobiliarias.";
 
 function renderWhatsAppIcon() {
   return `
@@ -211,8 +211,8 @@ function renderPropertyCover(property, bodyHtml, extraClass = "") {
   const imageClass = imageUrl ? " property-cover--image" : "";
   const className = `property-cover tone-${property?.heroTone || "cobalt"}${imageClass}${extraClass ? ` ${extraClass}` : ""}`;
   const alt = image?.sourceLabel
-    ? `${image.sourceLabel} de referencia para ${property?.title || "inmueble en remate"}`
-    : `Imagen de referencia para ${property?.title || "inmueble en remate"}`;
+    ? `${image.sourceLabel} de referencia para ${property?.title || "inmueble en subasta"}`
+    : `Imagen de referencia para ${property?.title || "inmueble en subasta"}`;
 
   return `
     <div class="${className}">
@@ -232,7 +232,7 @@ function renderLocationImageDisclaimer(image) {
   const source = !isFallback && image.sourceLabel ? ` Fuente: ${image.sourceLabel}.` : "";
   const disclaimer = isFallback
     ? "Imagen de referencia; puede no corresponder exactamente al inmueble."
-    : image.disclaimer || "Imagen obtenida de Google. Puede no corresponder de manera exacta al inmueble rematado.";
+    : image.disclaimer || "Imagen obtenida de Google. Puede no corresponder de manera exacta al inmueble subastado.";
   return `<p class="property-image-disclaimer">${escapeHtml(disclaimer + source)}</p>`;
 }
 
@@ -256,7 +256,7 @@ function propertyShareUrl(property = state.propertyDetail) {
 }
 
 function propertySharePayload(property = state.propertyDetail) {
-  const title = property?.title || "Inmueble en remate";
+  const title = property?.title || "Inmueble en subasta";
   const url = propertyShareUrl(property);
   return {
     title,
