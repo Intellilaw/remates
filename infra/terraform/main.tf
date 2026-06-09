@@ -32,6 +32,18 @@ variable "domain_name" {
   default = "subastas.legalflow.solutions"
 }
 
+variable "legacy_domain_name" {
+  type        = string
+  description = "Previously deployed domain retained while migrating to the primary domain."
+  default     = "remates.legalflow.solutions"
+}
+
+variable "domain_aliases" {
+  type        = list(string)
+  description = "Additional CloudFront aliases covered by the ACM certificate."
+  default     = ["remates.legalflow.solutions"]
+}
+
 variable "container_image" {
   type        = string
   description = "Fully qualified image URI. Use the ecr_repository_url output with a tag after the first apply."
@@ -99,9 +111,10 @@ variable "openai_extraction_model" {
 }
 
 locals {
-  name      = "${var.project_name}-${var.environment}"
-  image_uri = var.container_image != "" ? var.container_image : "${aws_ecr_repository.api.repository_url}:latest"
-  app_url   = "https://${var.domain_name}"
+  name           = "${var.project_name}-${var.environment}"
+  image_uri      = var.container_image != "" ? var.container_image : "${aws_ecr_repository.api.repository_url}:latest"
+  domain_aliases = distinct(concat([var.domain_name], var.domain_aliases))
+  app_url        = "https://${var.domain_name}"
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -445,9 +458,20 @@ resource "aws_lb_target_group" "api" {
 }
 
 resource "aws_acm_certificate" "site" {
-  domain_name       = var.domain_name
+  domain_name       = var.legacy_domain_name
   validation_method = "DNS"
   tags              = local.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_acm_certificate" "primary" {
+  domain_name               = var.domain_name
+  subject_alternative_names = [for alias in local.domain_aliases : alias if alias != var.domain_name]
+  validation_method         = "DNS"
+  tags                      = local.tags
 
   lifecycle {
     create_before_destroy = true
@@ -476,7 +500,7 @@ resource "aws_lb_listener" "https" {
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate.site.arn
+  certificate_arn   = aws_acm_certificate.primary.arn
 
   default_action {
     type             = "forward"
@@ -516,12 +540,12 @@ output "ecr_repository_url" {
 }
 
 output "acm_certificate_arn" {
-  value = aws_acm_certificate.site.arn
+  value = aws_acm_certificate.primary.arn
 }
 
 output "acm_dns_validation_records" {
   value = [
-    for option in aws_acm_certificate.site.domain_validation_options : {
+    for option in aws_acm_certificate.primary.domain_validation_options : {
       name  = option.resource_record_name
       type  = option.resource_record_type
       value = option.resource_record_value

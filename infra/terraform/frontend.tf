@@ -57,7 +57,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
   comment             = "${local.name} frontend"
   default_root_object = "index.html"
-  aliases             = var.enable_https ? [var.domain_name] : []
+  aliases             = var.enable_https ? local.domain_aliases : []
   price_class         = "PriceClass_100"
   tags                = local.tags
 
@@ -126,7 +126,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = var.enable_https ? aws_acm_certificate.site.arn : null
+    acm_certificate_arn            = var.enable_https ? aws_acm_certificate.primary.arn : null
     cloudfront_default_certificate = var.enable_https ? false : true
     ssl_support_method             = var.enable_https ? "sni-only" : null
     minimum_protocol_version       = var.enable_https ? "TLSv1.2_2021" : null
@@ -168,8 +168,9 @@ output "cloudfront_domain_name" {
 
 output "vercel_dns_record_for_app" {
   value = {
-    name  = "subastas"
-    type  = "CNAME"
-    value = aws_cloudfront_distribution.frontend.domain_name
+    name    = "subastas"
+    type    = "CNAME"
+    value   = aws_cloudfront_distribution.frontend.domain_name
+    aliases = local.domain_aliases
   }
 }
